@@ -60,6 +60,7 @@ fun FlixTheme(
         MaterialTheme(
             colorScheme = colors.toMaterial(dark),
             typography = FlixTypographyDefault.toMaterial(),
+            shapes = FlixShapes.toMaterial(),
             content = content
         )
     }
@@ -73,4 +74,8 @@ object FlixTheme {
     val typography: FlixTypography
     @Composable @ReadOnlyComposable
     get() = LocalFlixTypography.current
+
+    val shapes = FlixShapes
+    val spacing = FlixSpacing
+    val motion = FlixMotion
 }

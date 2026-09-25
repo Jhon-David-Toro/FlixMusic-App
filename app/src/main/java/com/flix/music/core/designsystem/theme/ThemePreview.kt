@@ -74,6 +74,30 @@ private fun TypeSpecimen() {
     }
 }
 
+@Composable
+private fun ShapeSpecimen() {
+    Row(
+        modifier = Modifier
+            .background(FlixTheme.colors.background)
+            .padding(FlixTheme.spacing.gutter),
+        horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.md),
+    ) {
+        listOf(
+            FlixTheme.shapes.sm,
+            FlixTheme.shapes.md,
+            FlixTheme.shapes.lg,
+            FlixTheme.shapes.xl,
+            FlixTheme.shapes.circle,
+        ).forEach { shape ->
+            Box(
+                Modifier
+                    .size(48.dp)
+                    .background(FlixTheme.colors.primary, shape)
+            )
+        }
+    }
+}
+
 @Preview(name = "Dark")
 @Composable
 private fun ColorsDarkPreview() {
@@ -90,4 +114,10 @@ private fun ColorsLightPreview() {
 @Composable
 private fun TypePreview() {
     FlixTheme(themeMode = ThemeMode.Dark) { TypeSpecimen() }
+}
+
+@Preview(name = "Formas")
+@Composable
+private fun ShapePreview() {
+    FlixTheme(themeMode = ThemeMode.Dark) { ShapeSpecimen() }
 }
