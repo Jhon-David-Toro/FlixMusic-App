@@ -1,4 +1,4 @@
-package com.flix.music.ui.theme
+package com.flix.music.core.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 

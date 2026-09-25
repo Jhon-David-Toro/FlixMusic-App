@@ -10,8 +10,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.flix.music.ui.theme.FlixMusicTheme
+import com.flix.music.core.designsystem.theme.FlixMusicTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,8 +21,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             FlixMusicTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+                    FlixApp(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -31,17 +31,17 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun FlixApp(modifier: Modifier = Modifier) {
     Text(
-        text = "Hello $name!",
+        text = stringResource(R.string.app_name),
         modifier = modifier
     )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun FlixAppPreview(){
     FlixMusicTheme {
-        Greeting("Android")
+        FlixApp()
     }
 }

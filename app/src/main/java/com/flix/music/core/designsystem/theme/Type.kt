@@ -1,4 +1,4 @@
-package com.flix.music.ui.theme
+package com.flix.music.core.designsystem.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
