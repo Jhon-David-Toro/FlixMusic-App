@@ -1,57 +1,65 @@
 package com.flix.music.core.designsystem.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+enum class ThemeMode { System, Light, Dark }
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+private val LocalFlixColors = staticCompositionLocalOf<FlixColors> {
+    error("FlixColors no provisto: envuelve la UI en FlixTheme { ... }")
+}
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
+private fun FlixColors.toMaterial(dark: Boolean): ColorScheme {
+    val base = if (dark) darkColorScheme() else lightColorScheme()
+
+    return base.copy(
+        primary = primary,
+        onPrimary = onPrimary,
+        secondary = secondary,
+        error = error,
+        background = background,
+        surface = surface,
+        surfaceVariant = surfaceVariant,
+        onBackground = textPrimary,
+        onSurface = textPrimary,
+        onSurfaceVariant = textSecondary,
+        outline = textTertiary,
+        outlineVariant = divider,
+        scrim = overlay,
+    )
+}
 
 @Composable
-fun FlixMusicTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+fun FlixTheme(
+    themeMode: ThemeMode = ThemeMode.System,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val dark = when (themeMode) {
+        ThemeMode.System -> isSystemInDarkTheme()
+        ThemeMode.Light -> false
+        ThemeMode.Dark -> true
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    val colors = if (dark) DarkFlixColors else LightFlixColors
+
+    CompositionLocalProvider(LocalFlixColors provides colors) {
+        MaterialTheme(
+            colorScheme = colors.toMaterial(dark),
+            typography = Typography,
+            content = content
+        )
+    }
+}
+
+object FlixTheme {
+    val colors: FlixColors
+    @Composable @ReadOnlyComposable
+    get() = LocalFlixColors.current
 }

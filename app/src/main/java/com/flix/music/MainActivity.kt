@@ -12,14 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.flix.music.core.designsystem.theme.FlixMusicTheme
+import com.flix.music.core.designsystem.theme.FlixTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            FlixMusicTheme {
+            FlixTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     FlixApp(
                         modifier = Modifier.padding(innerPadding)
@@ -41,7 +41,7 @@ fun FlixApp(modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun FlixAppPreview(){
-    FlixMusicTheme {
+    FlixTheme {
         FlixApp()
     }
 }
