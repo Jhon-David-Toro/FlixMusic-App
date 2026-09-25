@@ -10,6 +10,7 @@
 .DS_Store
 /build
 .kotlin/
+.idea/
 /captures
 .externalNativeBuild
 .cxx
