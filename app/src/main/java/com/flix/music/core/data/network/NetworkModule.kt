@@ -48,8 +48,7 @@ object NetworkModule {
             .client(client)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-
-    // Retrofit crea la implementación real de la interfaz FlixApi.
+    
     @Provides
     @Singleton
     fun provideFlixApi(retrofit: Retrofit): FlixApi = retrofit.create(FlixApi::class.java)
