@@ -3,4 +3,24 @@
     <string name="tab_home">Inicio</string>
     <string name="tab_search">Buscar</string>
     <string name="tab_library">Biblioteca</string>
+
+    <string name="search_placeholder">Canciones, artistas o álbumes</string>
+    <string name="search_clear">Borrar búsqueda</string>
+    <string name="search_idle_title">Encuentra tu música</string>
+    <string name="search_idle_body">Escribe el nombre de una canción, un artista o un álbum.</string>
+
+    <string name="search_empty_title">No encontramos resultados para “%1$s”</string>
+    <string name="search_empty_body">Revisa la ortografía o prueba solo con el nombre del artista o del álbum.</string>
+
+    <string name="action_retry">Reintentar</string>
+    <string name="error_no_connection_title">Sin conexión</string>
+    <string name="error_no_connection_body">Comprueba tu conexión e inténtalo nuevamente.</string>
+    <string name="error_server_title">No encontramos tu servidor Flix</string>
+    <string name="error_server_body">Comprueba que esté encendido y en la misma red que este teléfono.</string>
+    <string name="error_timeout_title">Está tardando demasiado</string>
+    <string name="error_timeout_body">El servidor no respondió a tiempo. Vuelve a intentarlo en unos segundos.</string>
+    <string name="error_upstream_title">El catálogo no responde ahora</string>
+    <string name="error_upstream_body">Suele resolverse en unos segundos.</string>
+    <string name="error_unknown_title">No pudimos cargar esto</string>
+    <string name="error_unknown_body">Vuelve a intentarlo en unos segundos.</string>
 </resources>
