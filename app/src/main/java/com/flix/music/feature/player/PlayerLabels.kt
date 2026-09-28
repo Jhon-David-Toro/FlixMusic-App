@@ -30,6 +30,8 @@ internal fun playPauseAction(status: PlaybackStatus, isMiniPlayer: Boolean): Pla
 internal fun playbackSourceLabel(source: PlaybackSource): String = when (source) {
     is PlaybackSource.Search -> stringResource(R.string.player_source_search, source.query)
     is PlaybackSource.Genre -> stringResource(R.string.player_source_genre, source.name)
+    PlaybackSource.Favorites -> stringResource(R.string.player_source_favorites)
+    PlaybackSource.History -> stringResource(R.string.player_source_history)
 }
 
 @StringRes

@@ -5,6 +5,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import com.flix.music.BuildConfig
+import com.flix.music.core.model.ArtistRef
 import com.flix.music.core.model.Track
 
 /**
@@ -26,10 +27,16 @@ internal fun Track.toMediaItem(): MediaItem =
         )
         .build()
 
-internal fun MediaItem.toNowPlaying(): NowPlaying =
-    NowPlaying(
-        trackId = mediaId,
+/**
+ * The [Track] behind this queue item: the one that was queued when known, otherwise
+ * rebuilt from the metadata (e.g. a session restored after the app was closed).
+ */
+internal fun MediaItem.toTrack(queuedTracks: Map<String, Track>): Track =
+    queuedTracks[mediaId] ?: Track(
+        id = mediaId,
         title = mediaMetadata.title?.toString().orEmpty(),
-        artist = mediaMetadata.artist?.toString().orEmpty(),
+        artists = mediaMetadata.artist?.toString()?.let { artistName -> listOf(ArtistRef(null, artistName)) }.orEmpty(),
+        album = null,
+        duration = null,
         artworkUrl = mediaMetadata.artworkUri?.toString(),
     )

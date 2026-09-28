@@ -118,7 +118,7 @@ fun SearchScreen(
         uiState = uiState,
         filter = viewModel.filter,
         recentSearches = recentSearches,
-        nowPlaying = NowPlayingMarker(playerState.current?.trackId, playerState.isActive),
+        nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
         actions = actions,
         modifier = modifier,
     )

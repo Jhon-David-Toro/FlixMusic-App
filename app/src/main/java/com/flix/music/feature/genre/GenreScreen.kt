@@ -94,7 +94,7 @@ fun GenreScreen(
         genre = viewModel.genre,
         uiState = uiState,
         actions = actions,
-        nowPlaying = NowPlayingMarker(playerState.current?.trackId, playerState.isActive),
+        nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
         modifier = modifier,
     )
 }

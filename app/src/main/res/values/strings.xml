@@ -70,6 +70,55 @@
     <string name="state_on">Activado</string>
     <string name="state_off">Desactivado</string>
 
+    <string name="favorites_title">Favoritos</string>
+    <string name="favorites_search">Buscar en favoritos</string>
+    <string name="favorites_play_all">Reproducir todo</string>
+    <string name="favorites_empty_title">Todavía no hay favoritos</string>
+    <string name="favorites_empty_body">Toca ♡ en cualquier canción y aparecerá aquí.</string>
+    <string name="favorites_no_match_title">Ningún favorito coincide con “%1$s”</string>
+    <string name="favorites_no_match_body">Prueba con otro título o artista.</string>
+    <string name="favorite_add">Añadir “%1$s” a favoritos</string>
+    <string name="favorite_remove">Quitar “%1$s” de favoritos</string>
+    <string name="favorite_removed">Quitada de favoritos</string>
+
+    <string name="history_title">Historial</string>
+    <string name="history_today">Hoy</string>
+    <string name="history_yesterday">Ayer</string>
+    <string name="history_clear">Borrar historial</string>
+    <string name="history_clear_title">¿Borrar tu historial?</string>
+    <string name="history_clear_message">Se quitarán todas las canciones que escuchaste. No se puede deshacer.</string>
+    <string name="history_clear_confirm">Borrar</string>
+    <string name="history_remove_entry">Quitar del historial</string>
+    <string name="history_entry_removed">Quitada del historial</string>
+    <string name="history_empty_title">Tu historial está vacío</string>
+    <string name="history_empty_body">Lo que escuches aparecerá aquí, agrupado por día.</string>
+
+    <string name="library_filter_playlists">Playlists</string>
+    <string name="library_filter_songs">Canciones</string>
+    <string name="library_history_today">Hoy · %1$d</string>
+    <string name="library_history_empty">Vacío</string>
+    <string name="library_no_playlists_title">Aún no tienes playlists</string>
+    <string name="library_no_playlists_body">Agrupa canciones para cada momento del día.</string>
+
+    <string name="sort_recent">Recientes</string>
+    <string name="sort_alphabetical">A–Z</string>
+    <string name="player_source_favorites">Tus favoritos</string>
+    <string name="player_source_history">Tu historial</string>
+    <string name="action_undo">Deshacer</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_more_options">Más opciones</string>
+    <string name="action_browse_music">Buscar música</string>
+    <string name="action_explore_genres">Explorar géneros</string>
+
+    <plurals name="songs_count">
+        <item quantity="one">%1$d canción</item>
+        <item quantity="other">%1$d canciones</item>
+    </plurals>
+    <plurals name="favorites_summary">
+        <item quantity="one">%1$d canción · %2$s</item>
+        <item quantity="other">%1$d canciones · %2$s</item>
+    </plurals>
+
     <string name="action_retry">Reintentar</string>
     <string name="error_no_connection_title">Sin conexión</string>
     <string name="error_no_connection_body">Comprueba tu conexión e inténtalo nuevamente.</string>

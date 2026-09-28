@@ -21,7 +21,13 @@ class FakePlayerController : PlayerController {
         val shuffle: Boolean,
     )
 
-    override val state: StateFlow<PlayerState> = MutableStateFlow(PlayerState())
+    private val mutableState = MutableStateFlow(PlayerState())
+
+    override val state: StateFlow<PlayerState> = mutableState
+
+    fun setState(playerState: PlayerState) {
+        mutableState.value = playerState
+    }
 
     override val events: Flow<PlayerEvent> = emptyFlow()
 

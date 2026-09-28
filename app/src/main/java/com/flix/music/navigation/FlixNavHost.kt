@@ -11,7 +11,11 @@ import com.flix.music.feature.genre.navigation.genreScreen
 import com.flix.music.feature.genre.navigation.navigateToGenre
 import com.flix.music.feature.home.navigation.HomeRoute
 import com.flix.music.feature.home.navigation.homeScreen
-import com.flix.music.feature.library.navigation.libraryScreen
+import com.flix.music.feature.favorites.navigation.favoritesScreen
+import com.flix.music.feature.favorites.navigation.navigateToFavorites
+import com.flix.music.feature.history.navigation.historyScreen
+import com.flix.music.feature.history.navigation.navigateToHistory
+import com.flix.music.feature.library.navigation.libraryGraph
 import com.flix.music.feature.search.navigation.searchGraph
 
 @Composable
@@ -19,6 +23,7 @@ fun FlixNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
+    val browseMusic = { navController.navigateToTopLevel(TopLevelDestination.Search) }
     NavHost(
         navController = navController,
         startDestination = HomeRoute,
@@ -34,7 +39,14 @@ fun FlixNavHost(
         ) {
             genreScreen(onBack = navController::popBackStack)
         }
-        libraryScreen()
+        libraryGraph(
+            onOpenFavorites = navController::navigateToFavorites,
+            onOpenHistory = navController::navigateToHistory,
+            onBrowseMusic = browseMusic,
+        ) {
+            favoritesScreen(onBack = navController::popBackStack, onBrowseMusic = browseMusic)
+            historyScreen(onBack = navController::popBackStack, onBrowseMusic = browseMusic)
+        }
     }
 }
 

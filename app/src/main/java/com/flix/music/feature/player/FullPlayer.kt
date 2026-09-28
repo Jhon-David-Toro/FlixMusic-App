@@ -54,6 +54,7 @@ import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.flix.music.R
+import com.flix.music.core.designsystem.component.FavoriteButton
 import com.flix.music.core.designsystem.component.PlayPauseButton
 import com.flix.music.core.designsystem.component.SeekBar
 import com.flix.music.core.designsystem.component.util.rememberDelayedFlag
@@ -62,7 +63,8 @@ import com.flix.music.core.designsystem.theme.FlixMotion
 import com.flix.music.core.designsystem.theme.FlixPreview
 import com.flix.music.core.designsystem.theme.FlixTheme
 import com.flix.music.core.designsystem.theme.ThemeMode
-import com.flix.music.core.player.NowPlaying
+import com.flix.music.core.model.ArtistRef
+import com.flix.music.core.model.Track
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlaybackStatus
 import com.flix.music.core.player.PlayerState
@@ -80,6 +82,7 @@ data class FullPlayerActions(
     val onToggleShuffle: () -> Unit = {},
     val onCycleRepeat: () -> Unit = {},
     val onRetry: () -> Unit = {},
+    val onToggleFavorite: () -> Unit = {},
 )
 
 /**
@@ -93,6 +96,7 @@ fun FullPlayer(
     state: PlayerState,
     actions: FullPlayerActions,
     modifier: Modifier = Modifier,
+    isFavorite: Boolean = false,
     artworkModifier: Modifier = Modifier,
 ) {
     val nowPlaying = state.current ?: return
@@ -133,7 +137,12 @@ fun FullPlayer(
                         .align(Alignment.CenterHorizontally)
                         .then(artworkModifier),
                 )
-                TrackTitle(nowPlaying, Modifier.padding(top = FlixTheme.spacing.xxl))
+                TrackTitle(
+                    track = nowPlaying,
+                    isFavorite = isFavorite,
+                    onToggleFavorite = actions.onToggleFavorite,
+                    modifier = Modifier.padding(top = FlixTheme.spacing.xxl),
+                )
                 if (state.status == PlaybackStatus.Error) {
                     ErrorBanner(
                         canSkip = state.hasNext,
@@ -212,7 +221,7 @@ private fun PlayerTopBar(source: PlaybackSource?, onCollapse: () -> Unit) {
 }
 
 @Composable
-private fun PlayerArtwork(nowPlaying: NowPlaying, status: PlaybackStatus, modifier: Modifier = Modifier) {
+private fun PlayerArtwork(nowPlaying: Track, status: PlaybackStatus, modifier: Modifier = Modifier) {
     val artworkScale by animateFloatAsState(
         targetValue = if (status == PlaybackStatus.Paused) PAUSED_ARTWORK_SCALE else 1f,
         animationSpec = tween(FlixMotion.NORMAL, easing = FlixMotion.Standard),
@@ -238,17 +247,37 @@ private fun PlayerArtwork(nowPlaying: NowPlaying, status: PlaybackStatus, modifi
 }
 
 @Composable
-private fun TrackTitle(nowPlaying: NowPlaying, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth()) {
+private fun TrackTitle(
+    track: Track,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        Column(Modifier.weight(1f)) {
+            TrackTitleText(track)
+        }
+        FavoriteButton(
+            isFavorite = isFavorite,
+            onToggle = onToggleFavorite,
+            trackTitle = track.title,
+            iconSize = PLAYER_FAVORITE_ICON_SIZE,
+        )
+    }
+}
+
+@Composable
+private fun TrackTitleText(track: Track) {
+    Column {
         Text(
-            text = nowPlaying.title,
+            text = track.title,
             style = FlixTheme.typography.titleLarge,
             color = FlixTheme.colors.textPrimary,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            text = nowPlaying.artist,
+            text = track.artistNames,
             style = FlixTheme.typography.body.copy(fontWeight = FontWeight.Medium),
             color = FlixTheme.colors.textSecondary,
             maxLines = 1,
@@ -396,7 +425,7 @@ private fun ModeToggle(
 
 /** "A continuación" strip (design `.peek`): the next track in the queue. */
 @Composable
-private fun UpNext(nextTrack: NowPlaying, modifier: Modifier = Modifier) {
+private fun UpNext(nextTrack: Track, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -422,7 +451,7 @@ private fun UpNext(nextTrack: NowPlaying, modifier: Modifier = Modifier) {
                 color = FlixTheme.colors.textSecondary,
             )
             Text(
-                text = "${nextTrack.title} · ${nextTrack.artist}",
+                text = "${nextTrack.title} · ${nextTrack.artistNames}",
                 style = FlixTheme.typography.label,
                 color = FlixTheme.colors.textPrimary,
                 maxLines = 1,
@@ -446,12 +475,13 @@ private val ACTIVE_DOT_RADIUS = 2.dp
 private val ACTIVE_DOT_BOTTOM = 6.dp
 private val BANNER_ICON_SIZE = 20.dp
 private val PEEK_ARTWORK_SIZE = 40.dp
+private val PLAYER_FAVORITE_ICON_SIZE = 28.dp
 private val COLLAPSE_DRAG_THRESHOLD = 120.dp
 
 private val previewState = PlayerState(
     status = PlaybackStatus.Playing,
-    current = NowPlaying("1", "Fade To Black", "Metallica", null),
-    next = NowPlaying("2", "Fade to Black", "Apocalyptica", null),
+    current = Track("1", "Fade To Black", listOf(ArtistRef(null, "Metallica")), null, null, null),
+    next = Track("2", "Fade to Black", listOf(ArtistRef(null, "Apocalyptica")), null, null, null),
     source = PlaybackSource.Search("fade to black"),
     position = 161.seconds,
     bufferedPosition = 260.seconds,
@@ -463,7 +493,7 @@ private val previewState = PlayerState(
 @Preview(name = "Full Player", widthDp = 360, heightDp = 760)
 @Composable
 private fun FullPlayerPreview() {
-    FlixPreview { FullPlayer(state = previewState, actions = FullPlayerActions()) }
+    FlixPreview { FullPlayer(state = previewState, actions = FullPlayerActions(), isFavorite = true) }
 }
 
 @Preview(name = "Full Player · error", widthDp = 360, heightDp = 760)

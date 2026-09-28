@@ -1,5 +1,6 @@
 package com.flix.music.core.player
 
+import com.flix.music.core.model.Track
 import kotlin.time.Duration
 
 /**
@@ -11,24 +12,18 @@ enum class PlaybackStatus { Idle, Loading, Buffering, Playing, Paused, Ended, Er
 
 enum class RepeatMode { Off, All, One }
 
-/** What the player shows for a track: available instantly from the queue metadata. */
-data class NowPlaying(
-    val trackId: String,
-    val title: String,
-    val artist: String,
-    val artworkUrl: String?,
-)
-
 /** Where the current queue came from, shown as "Reproduciendo desde …". */
 sealed interface PlaybackSource {
     data class Search(val query: String) : PlaybackSource
     data class Genre(val name: String) : PlaybackSource
+    data object Favorites : PlaybackSource
+    data object History : PlaybackSource
 }
 
 data class PlayerState(
     val status: PlaybackStatus = PlaybackStatus.Idle,
-    val current: NowPlaying? = null,
-    val next: NowPlaying? = null,
+    val current: Track? = null,
+    val next: Track? = null,
     val source: PlaybackSource? = null,
     val position: Duration = Duration.ZERO,
     val bufferedPosition: Duration = Duration.ZERO,

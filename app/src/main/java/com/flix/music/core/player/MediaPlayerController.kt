@@ -8,6 +8,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.flix.music.core.data.repository.HistoryRepository
 import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.model.Track
 import com.google.common.util.concurrent.ListenableFuture
@@ -42,12 +43,14 @@ import kotlin.time.Duration.Companion.milliseconds
  * Error handling follows the design: a failed track is retried once silently; if it
  * fails again it is skipped with a [PlayerEvent.TrackSkipped] snackbar, and the last
  * track of the queue stays in [PlaybackStatus.Error] with a retry action.
- * The next track is prefetched through `/stream` so skips start instantly.
+ * The next track is prefetched through `/stream` so skips start instantly, and every
+ * track is added to the history the first time it actually plays.
  */
 @Singleton
 class MediaPlayerController @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: MusicRepository,
+    private val historyRepository: HistoryRepository,
 ) : PlayerController {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -62,6 +65,8 @@ class MediaPlayerController @Inject constructor(
     private val controller: Deferred<MediaController> = scope.async { connect() }
 
     private var source: PlaybackSource? = null
+    private var queuedTracks: Map<String, Track> = emptyMap()
+    private var recordedCurrentTrack = false
     private var currentTrackWasReady = false
     private var retriedCurrentTrack = false
     private var recoveringFromError = false
@@ -72,6 +77,7 @@ class MediaPlayerController @Inject constructor(
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             currentTrackWasReady = false
             retriedCurrentTrack = false
+            recordedCurrentTrack = false
             prefetchNextTrack()
         }
 
@@ -89,12 +95,14 @@ class MediaPlayerController @Inject constructor(
         override fun onEvents(player: Player, events: Player.Events) {
             publishState(player)
             updatePositionTicker(player)
+            recordInHistoryOnFirstPlay()
         }
     }
 
     override fun play(tracks: List<Track>, startIndex: Int, source: PlaybackSource, shuffle: Boolean) {
         if (tracks.isEmpty()) return
         this.source = source
+        queuedTracks = tracks.associateBy { it.id }
         withController { mediaController ->
             mediaController.shuffleModeEnabled = shuffle
             mediaController.setMediaItems(
@@ -190,6 +198,14 @@ class MediaPlayerController @Inject constructor(
         }
     }
 
+    private fun recordInHistoryOnFirstPlay() {
+        val currentState = _state.value
+        val track = currentState.current ?: return
+        if (recordedCurrentTrack || currentState.status != PlaybackStatus.Playing) return
+        recordedCurrentTrack = true
+        scope.launch { runCatching { historyRepository.record(track) } }
+    }
+
     private fun publishState(player: Player) {
         val currentItem = player.currentMediaItem
         val nextItem = if (player.hasNextMediaItem()) player.getMediaItemAt(player.nextMediaItemIndex) else null
@@ -201,8 +217,8 @@ class MediaPlayerController @Inject constructor(
                 hasError = player.playerError != null && !recoveringFromError,
                 currentTrackWasReady = currentTrackWasReady,
             ),
-            current = currentItem?.toNowPlaying(),
-            next = nextItem?.toNowPlaying(),
+            current = currentItem?.toTrack(queuedTracks),
+            next = nextItem?.toTrack(queuedTracks),
             source = source,
             position = player.currentPosition.coerceAtLeast(0L).milliseconds,
             bufferedPosition = player.bufferedPosition.coerceAtLeast(0L).milliseconds,

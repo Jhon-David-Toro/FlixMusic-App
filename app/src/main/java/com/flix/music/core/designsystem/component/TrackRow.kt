@@ -28,6 +28,8 @@ import com.flix.music.core.designsystem.theme.FlixTheme
  * Song row. When [isCurrent] it follows the design's "now playing" row (`.row.on`):
  * title in primaryContent and the equalizer in place of the duration, animated only
  * while [isPlaying]. The state is also announced to screen readers.
+ * [trailing] replaces the duration/equalizer slot (e.g. the ♥ in Favoritos or the
+ * time in Historial).
  */
 @Composable
 fun TrackRow(
@@ -39,6 +41,7 @@ fun TrackRow(
     duration: String? = null,
     isCurrent: Boolean = false,
     isPlaying: Boolean = false,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     val playbackStateLabel = when {
         !isCurrent -> null
@@ -81,6 +84,7 @@ fun TrackRow(
             )
         }
         when {
+            trailing != null -> trailing()
             isCurrent -> NowPlayingEqualizer(animated = isPlaying)
             duration != null -> Text(
                 text = duration,

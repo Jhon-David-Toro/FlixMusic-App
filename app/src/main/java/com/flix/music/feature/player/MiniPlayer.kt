@@ -39,13 +39,15 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.flix.music.R
 import com.flix.music.core.designsystem.component.AnimatedIcon
+import com.flix.music.core.designsystem.component.FavoriteButton
 import com.flix.music.core.designsystem.component.LoadingRing
 import com.flix.music.core.designsystem.component.util.rememberDelayedFlag
 import com.flix.music.core.designsystem.theme.FlixMotion
 import com.flix.music.core.designsystem.theme.FlixPreview
 import com.flix.music.core.designsystem.theme.FlixTheme
 import com.flix.music.core.designsystem.theme.ThemeMode
-import com.flix.music.core.player.NowPlaying
+import com.flix.music.core.model.ArtistRef
+import com.flix.music.core.model.Track
 import com.flix.music.core.player.PlaybackStatus
 import com.flix.music.core.player.PlayerState
 import kotlinx.coroutines.launch
@@ -67,6 +69,8 @@ fun MiniPlayer(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     modifier: Modifier = Modifier,
+    isFavorite: Boolean = false,
+    onToggleFavorite: () -> Unit = {},
     artworkModifier: Modifier = Modifier,
 ) {
     val nowPlaying = state.current ?: return
@@ -138,6 +142,13 @@ fun MiniPlayer(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            if (!isError) {
+                FavoriteButton(
+                    isFavorite = isFavorite,
+                    onToggle = onToggleFavorite,
+                    trackTitle = nowPlaying.title,
+                )
+            }
             MiniPlayerAction(status = state.status, onPlayPause = onPlayPause, onRetry = onRetry)
         }
         ProgressLine(
@@ -150,10 +161,10 @@ fun MiniPlayer(
 }
 
 @Composable
-private fun miniSubtitle(status: PlaybackStatus, nowPlaying: NowPlaying): String = when (status) {
+private fun miniSubtitle(status: PlaybackStatus, nowPlaying: Track): String = when (status) {
     PlaybackStatus.Error -> stringResource(R.string.player_mini_error)
     PlaybackStatus.Ended -> stringResource(R.string.player_queue_ended)
-    else -> nowPlaying.artist
+    else -> nowPlaying.artistNames
 }
 
 @Composable
@@ -224,7 +235,7 @@ private const val ERROR_BORDER_ALPHA = 0.5f
 private val DarkElevationShadow = Color(0x73000000)
 private val LightElevationShadow = Color(0x1F101218)
 
-private val previewNowPlaying = NowPlaying("1", "Fade To Black", "Metallica", null)
+private val previewNowPlaying = Track("1", "Fade To Black", listOf(ArtistRef(null, "Metallica")), null, null, null)
 
 @Preview(name = "Mini · estados", widthDp = 360)
 @Composable
