@@ -61,6 +61,8 @@ Ejemplo: si el backend cambia `duration_seconds` por `duration_ms`, se modifican
 - Las versiones de librerías van en `gradle/libs.versions.toml`.
 - Inyección de dependencias con Hilt (se añade antes de la capa de datos).
 - Cada feature se prueba con repositories falsos (implementaciones de prueba de la interfaz).
+- **Nombres descriptivos siempre**: nada de variables de una letra (`c`, `t`, `e`, `q`, `x`). Cada nombre dice qué contiene: `flixColors`, `searchQuery`, `exception`. El código lo lee alguien que no lo escribió.
+  - **Excepción: `it`** está permitido en lambdas cortas de una línea donde es obvio qué es (`tracks.map { it.toTrack() }`, `key = { it.id }`). Si la lambda ocupa varias líneas, hay lambdas anidadas o no es evidente qué contiene, se nombra: `{ track -> … }`.
 
 ## Cuándo separar en módulos de Gradle
 

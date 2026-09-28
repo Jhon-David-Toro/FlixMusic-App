@@ -1,19 +1,15 @@
 package com.flix.music.feature.search
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -23,6 +19,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.flix.music.R
 import com.flix.music.core.designsystem.component.ErrorStateView
+import com.flix.music.core.designsystem.component.LoadingHairline
 import com.flix.music.core.designsystem.component.SearchField
 import com.flix.music.core.designsystem.component.StateView
 import com.flix.music.core.designsystem.component.TrackRow
@@ -85,18 +82,12 @@ fun SearchContent(
             modifier = Modifier.padding(horizontal = FlixTheme.spacing.gutter),
         )
 
-        if (uiState is SearchUiState.Loading) {
-            LinearProgressIndicator(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = FlixTheme.spacing.gutter)
-                    .height(2.dp),
-                color = FlixTheme.colors.primary,
-                trackColor = Color.Transparent,
-            )
-        } else {
-            Spacer(Modifier.height(2.dp))
-        }
+        LoadingHairline(
+            visible = uiState is SearchUiState.Loading,
+            modifier = Modifier
+                .padding(horizontal = FlixTheme.spacing.gutter)
+                .offset(y = (-2).dp),
+        )
 
         when (uiState) {
             SearchUiState.Idle -> StateView(
@@ -117,9 +108,14 @@ fun SearchContent(
                 title = stringResource(R.string.search_empty_title, uiState.query),
                 body = stringResource(R.string.search_empty_body),
             )
-            is SearchUiState.Error -> ErrorStateView(error = uiState.error, onRetry = onRetry)
+            is SearchUiState.Error -> ErrorStateView(
+                error = uiState.error,
+                onRetry = onRetry,
+                upstreamTitle = R.string.search_error_upstream_title,
+                upstreamBody = R.string.search_error_upstream_body,
+            )
             is SearchUiState.Results -> LazyColumn {
-                items(uiState.tracks, key = { it.id }) { track ->
+                items(uiState.tracks, key = { track -> track.id }) { track ->
                     TrackRow(
                         title = track.title,
                         subtitle = track.artistNames,

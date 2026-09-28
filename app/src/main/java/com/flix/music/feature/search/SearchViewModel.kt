@@ -51,13 +51,13 @@ class SearchViewModel @Inject constructor(
         searchJob = viewModelScope.launch { search(query.trim()) }
     }
 
-    private suspend fun search(q: String) {
+    private suspend fun search(searchQuery: String) {
         _uiState.value = SearchUiState.Loading
         _uiState.value = try {
-            val tracks = repository.search(q)
-            if (tracks.isEmpty()) SearchUiState.Empty(q) else SearchUiState.Results(tracks)
-        } catch (e: FlixException) {
-            SearchUiState.Error(e.error)
+            val tracks = repository.search(searchQuery)
+            if (tracks.isEmpty()) SearchUiState.Empty(searchQuery) else SearchUiState.Results(tracks)
+        } catch (exception: FlixException) {
+            SearchUiState.Error(exception.error)
         }
     }
 

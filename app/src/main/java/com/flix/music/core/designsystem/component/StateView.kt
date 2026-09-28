@@ -1,6 +1,7 @@
 package com.flix.music.core.designsystem.component
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -63,6 +65,7 @@ fun StateView(
             style = FlixTheme.typography.bodySmall,
             color = FlixTheme.colors.textSecondary,
             textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 280.dp),
         )
         if (actionLabel != null && onAction != null) {
             Button(
@@ -84,12 +87,15 @@ fun ErrorStateView(
     error: FlixError,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    @StringRes upstreamTitle: Int = R.string.error_upstream_title,
+    @StringRes upstreamBody: Int = R.string.error_upstream_body,
 ) {
-    val (icon, title, body) = error.toCopy()
+    val (icon, genericTitle, genericBody) = error.toCopy()
+    val isUpstream = error == FlixError.Upstream
     StateView(
         icon = icon,
-        title = stringResource(title),
-        body = stringResource(body),
+        title = stringResource(if (isUpstream) upstreamTitle else genericTitle),
+        body = stringResource(if (isUpstream) upstreamBody else genericBody),
         actionLabel = stringResource(R.string.action_retry),
         onAction = onRetry,
         modifier = modifier,

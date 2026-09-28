@@ -1,6 +1,8 @@
 package com.flix.music.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -12,6 +14,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -33,7 +37,7 @@ fun FlixApp() {
         bottomBar = {
             FlixBottomBar(
                 currentDestination = currentDestination,
-                onNavigate = { navController.navigateToTopLevel(it) },
+                onNavigate = { destination -> navController.navigateToTopLevel(destination) },
             )
         },
     ) { innerPadding ->
@@ -44,33 +48,41 @@ fun FlixApp() {
 @Composable
 private fun FlixBottomBar(
     currentDestination: NavDestination?,
-    onNavigate: (TopLevelDestination) -> Unit
+    onNavigate: (TopLevelDestination) -> Unit,
 ) {
-    NavigationBar(containerColor = FlixTheme.colors.surface) {
-        TopLevelDestination.entries.forEach { destination ->
-            val selected  = currentDestination?.hierarchy
-                ?.any { it.hasRoute(destination.route::class) } == true
+    Column {
+        HorizontalDivider(thickness = Dp.Hairline, color = FlixTheme.colors.divider)
+        NavigationBar(containerColor = FlixTheme.colors.surface) {
+            TopLevelDestination.entries.forEach { destination ->
+                val selected = currentDestination?.hierarchy
+                    ?.any { navDestination -> navDestination.hasRoute(destination.route::class) } == true
 
-            NavigationBarItem(
-                selected = selected,
-                onClick = { onNavigate(destination) },
-                icon = {
-                    Icon(
-                        painter = painterResource(
-                            if (selected) destination.selectedIcon else destination.icon
-                        ),
-                        contentDescription = null,
-                    )
-                },
-                label = { Text(stringResource(destination.label)) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = FlixTheme.colors.textPrimary,
-                    selectedTextColor = FlixTheme.colors.textPrimary,
-                    indicatorColor = FlixTheme.colors.surfaceVariant,
-                    unselectedIconColor = FlixTheme.colors.textSecondary,
-                    unselectedTextColor = FlixTheme.colors.textSecondary,
+                NavigationBarItem(
+                    selected = selected,
+                    onClick = { onNavigate(destination) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(
+                                if (selected) destination.selectedIcon else destination.icon
+                            ),
+                            contentDescription = null,
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = stringResource(destination.label),
+                            style = FlixTheme.typography.caption.copy(fontWeight = FontWeight.SemiBold),
+                        )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = FlixTheme.colors.textPrimary,
+                        selectedTextColor = FlixTheme.colors.textPrimary,
+                        indicatorColor = FlixTheme.colors.surfaceVariant,
+                        unselectedIconColor = FlixTheme.colors.textSecondary,
+                        unselectedTextColor = FlixTheme.colors.textSecondary,
+                    ),
                 )
-            )
+            }
         }
     }
 }

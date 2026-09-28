@@ -9,6 +9,8 @@ object FlixMotion {
     const val FAST = 120
     const val NORMAL = 240
     const val SLOW = 400
+    const val TAB_EXIT = 90
+    const val TAB_ENTER = 150
 
     val Standard = CubicBezierEasing(0.2f, 0f, 0f, 1f)
     val Decelerate = CubicBezierEasing(0f, 0f, 0f, 1f)

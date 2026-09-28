@@ -23,6 +23,8 @@
     <string name="error_timeout_body">El servidor no respondió a tiempo. Vuelve a intentarlo en unos segundos.</string>
     <string name="error_upstream_title">El catálogo no responde ahora</string>
     <string name="error_upstream_body">Suele resolverse en unos segundos.</string>
+    <string name="search_error_upstream_title">La búsqueda no responde ahora</string>
+    <string name="search_error_upstream_body">El catálogo de música no contestó. Suele resolverse en unos segundos.</string>
     <string name="error_unknown_title">No pudimos cargar esto</string>
     <string name="error_unknown_body">Vuelve a intentarlo en unos segundos.</string>
 </resources>

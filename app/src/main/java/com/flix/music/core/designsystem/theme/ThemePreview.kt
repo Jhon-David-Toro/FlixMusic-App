@@ -54,23 +54,23 @@ private fun ColorSwatches() {
 
 @Composable
 private fun TypeSpecimen() {
-    val t = FlixTheme.typography
+    val typography = FlixTheme.typography
     Column(
         modifier = Modifier
             .background(FlixTheme.colors.background)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text("Ride the Lightning", style = t.display, color = FlixTheme.colors.textPrimary)
-        Text("Buenas noches", style = t.headline, color = FlixTheme.colors.textPrimary)
-        Text("Fade To Black", style = t.titleLarge, color = FlixTheme.colors.textPrimary)
-        Text("Escuchado recientemente", style = t.title, color = FlixTheme.colors.textPrimary)
-        Text("For Whom the Bell Tolls", style = t.subtitle, color = FlixTheme.colors.textPrimary)
-        Text("Busca canciones, artistas o álbumes.", style = t.body, color = FlixTheme.colors.textPrimary)
-        Text("Metallica · Ride the Lightning", style = t.bodySmall, color = FlixTheme.colors.textSecondary)
-        Text("Reproducir", style = t.label, color = FlixTheme.colors.primaryContent)
-        Text("2:41 · 6:57", style = t.caption, color = FlixTheme.colors.textSecondary)
-        Text("HOY".uppercase(), style = t.overline, color = FlixTheme.colors.textSecondary)
+        Text("Ride the Lightning", style = typography.display, color = FlixTheme.colors.textPrimary)
+        Text("Buenas noches", style = typography.headline, color = FlixTheme.colors.textPrimary)
+        Text("Fade To Black", style = typography.titleLarge, color = FlixTheme.colors.textPrimary)
+        Text("Escuchado recientemente", style = typography.title, color = FlixTheme.colors.textPrimary)
+        Text("For Whom the Bell Tolls", style = typography.subtitle, color = FlixTheme.colors.textPrimary)
+        Text("Busca canciones, artistas o álbumes.", style = typography.body, color = FlixTheme.colors.textPrimary)
+        Text("Metallica · Ride the Lightning", style = typography.bodySmall, color = FlixTheme.colors.textSecondary)
+        Text("Reproducir", style = typography.label, color = FlixTheme.colors.primaryContent)
+        Text("2:41 · 6:57", style = typography.caption, color = FlixTheme.colors.textSecondary)
+        Text("HOY".uppercase(), style = typography.overline, color = FlixTheme.colors.textSecondary)
     }
 }
 

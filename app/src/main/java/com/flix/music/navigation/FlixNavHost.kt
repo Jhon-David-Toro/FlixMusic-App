@@ -24,20 +24,22 @@ fun FlixNavHost(
         navController = navController,
         startDestination = HomeRoute,
         modifier = modifier,
-        exitTransition =  { fadeOut(tween(FlixMotion.FAST)) },
-        enterTransition = {
-            fadeIn(tween(durationMillis = FlixMotion.NORMAL, delayMillis = FlixMotion.FAST))
-        },
-        popEnterTransition = {
-            fadeIn(tween(durationMillis = FlixMotion.NORMAL, delayMillis = FlixMotion.FAST))
-        },
-        popExitTransition = { fadeOut(tween(FlixMotion.FAST))}
+        exitTransition = { tabExit() },
+        enterTransition = { tabEnter() },
+        popExitTransition = { tabExit() },
+        popEnterTransition = { tabEnter() },
     ) {
         homeScreen()
         searchScreen()
         libraryScreen()
     }
 }
+
+private fun tabExit() = fadeOut(tween(FlixMotion.TAB_EXIT, easing = FlixMotion.Accelerate))
+
+private fun tabEnter() = fadeIn(
+    tween(FlixMotion.TAB_ENTER, delayMillis = FlixMotion.TAB_EXIT, easing = FlixMotion.Decelerate)
+)
 
 fun NavController.navigateToTopLevel(destination: TopLevelDestination) {
     navigate(destination.route) {

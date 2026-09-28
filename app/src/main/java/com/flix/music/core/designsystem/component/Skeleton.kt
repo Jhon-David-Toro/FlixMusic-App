@@ -51,12 +51,12 @@ fun SkeletonBox(
             .clip(shape)
             .drawBehind {
                 drawRect(base)
-                val x = -size.width + progress * 2 * size.width
+                val bandStartX = -size.width + progress * 2 * size.width
                 drawRect(
                     brush = Brush.horizontalGradient(
                         colors = listOf(Color.Transparent, highlight, Color.Transparent),
-                        startX = x,
-                        endX = x + size.width,
+                        startX = bandStartX,
+                        endX = bandStartX + size.width,
                     )
                 )
             }

@@ -25,8 +25,8 @@ fun Throwable.toFlixException(): FlixException = FlixException(
 suspend inline fun <T> apiCall(block: () -> T): T =
     try {
         block()
-    } catch (error: CancellationException) {
-        throw error
-    } catch (error: Exception) {
-        throw error.toFlixException()
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (exception: Exception) {
+        throw exception.toFlixException()
     }
