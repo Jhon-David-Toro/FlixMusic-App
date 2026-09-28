@@ -34,7 +34,7 @@ class TrackCollectionsTest {
             track("1", listOf(ArtistRef("m", "Metallica")), AlbumRef("rtl", "Ride the Lightning")),
             track("2", listOf(ArtistRef("m", "Metallica")), AlbumRef("rtl", "Ride the Lightning")),
             track("3", listOf(ArtistRef("m", "Metallica")), AlbumRef(null, "Single")),
-            track("4", listOf(ArtistRef("m", "Metallica"))), // sin álbum
+            track("4", listOf(ArtistRef("m", "Metallica"))),
         )
 
         assertEquals(

@@ -27,9 +27,16 @@ Un solo módulo de Gradle (`:app`) con paquetes que imitan módulos futuros:
 | `core/designsystem/theme` | `FlixTheme`: colores, tipografía, formas, spacing, motion. |
 | `core/designsystem/component` | Componentes reutilizables sin lógica de negocio: botones, `TrackRow`, `MiniPlayer`, `StateView`… |
 | `core/model` | Modelos de dominio: `Track`, `Artist`, `Album`, `Playlist`, `QueueItem`… Clases de datos puras. |
-| `core/data` | DTOs de la API, cliente HTTP, Room, mappers DTO → dominio, interfaces e implementaciones de repositories. |
+| `core/data` | DTOs de la API, cliente HTTP, DataStore/Room, mappers DTO → dominio, interfaces e implementaciones de repositories. |
+| `core/navigation` | Tipos de navegación compartidos entre features (`TopLevelRoute`). |
 | `core/player` *(futuro)* | Media3 / ExoPlayer y estado de reproducción. |
-| `feature/<nombre>` | Una carpeta por funcionalidad (`home`, `search`, `library`…): su pantalla, su ViewModel, su `UiState` y su ruta de navegación. |
+| `feature/<nombre>` | Una carpeta por funcionalidad (`home`, `search`, `genre`, `library`…): su pantalla, su ViewModel, su `UiState` y su ruta de navegación. |
+
+### Navegación
+
+- Cada pestaña es un destino de primer nivel (`TopLevelRoute`). Si una pestaña tiene pantallas de detalle, es un **grafo anidado** (`SearchGraph`) y sus detalles se registran dentro, así la pestaña sigue marcada.
+- Cada feature expone su ruta, `NavGraphBuilder.xxxScreen()` y `NavController.navigateToXxx()`. Solo `FlixNavHost` (paquete de la app) las conecta entre sí.
+- Las transiciones están en `FlixTransitions`: fade-through entre pestañas y "push" (24 dp + fade) hacia los detalles.
 
 ## Reglas de dependencias
 
@@ -63,6 +70,9 @@ Ejemplo: si el backend cambia `duration_seconds` por `duration_ms`, se modifican
 - Cada feature se prueba con repositories falsos (implementaciones de prueba de la interfaz).
 - **Nombres descriptivos siempre**: nada de variables de una letra (`c`, `t`, `e`, `q`, `x`). Cada nombre dice qué contiene: `flixColors`, `searchQuery`, `exception`. El código lo lee alguien que no lo escribió.
   - **Excepción: `it`** está permitido en lambdas cortas de una línea donde es obvio qué es (`tracks.map { it.toTrack() }`, `key = { it.id }`). Si la lambda ocupa varias líneas, hay lambdas anidadas o no es evidente qué contiene, se nombra: `{ track -> … }`.
+- **Sin comentarios en línea (`//`)**. Si algo necesita documentación, se usa **KDoc** (`/** … */`) en **inglés**, sobre la clase, función o propiedad: qué es y por qué, no una narración del código.
+- **Fidelidad al diseño**: cada pantalla y componente sigue `../design/flix-design.html` (valores, estados y animaciones). Si algo se desvía por una limitación, se documenta como pendiente.
+- **Commits**: una sola línea en estilo convencional (`feat: …`, `fix: …`, `refactor: …`, `test: …`, `docs: …`), sin cuerpo.
 
 ## Cuándo separar en módulos de Gradle
 
