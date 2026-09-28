@@ -1,6 +1,7 @@
 package com.flix.music.core.data.network
 
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface FlixApi {
@@ -12,4 +13,8 @@ interface FlixApi {
         @Query("query") query: String,
         @Query("limit") limit: Int = 20
     ): SearchResponseDto
+
+    /** Resolves and caches the audio URL on the server; the response body is not needed. */
+    @GET("api/music/songs/{songId}/stream")
+    suspend fun prefetchStream(@Path("songId") songId: String)
 }

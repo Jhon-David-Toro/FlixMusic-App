@@ -15,11 +15,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.flix.music.R
 import com.flix.music.core.designsystem.theme.FlixTheme
 
+/**
+ * Song row. When [isCurrent] it follows the design's "now playing" row (`.row.on`):
+ * title in primaryContent and the equalizer in place of the duration, animated only
+ * while [isPlaying]. The state is also announced to screen readers.
+ */
 @Composable
 fun TrackRow(
     title: String,
@@ -28,15 +37,23 @@ fun TrackRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     duration: String? = null,
+    isCurrent: Boolean = false,
+    isPlaying: Boolean = false,
 ) {
+    val playbackStateLabel = when {
+        !isCurrent -> null
+        isPlaying -> stringResource(R.string.now_playing)
+        else -> stringResource(R.string.now_paused)
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = FlixTheme.spacing.rowHeight)
             .clickable(onClick = onClick)
+            .semantics { if (playbackStateLabel != null) stateDescription = playbackStateLabel }
             .padding(horizontal = FlixTheme.spacing.gutter),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.itemGap)
+        horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.itemGap),
     ) {
         AsyncImage(
             model = artworkUrl,
@@ -45,31 +62,37 @@ fun TrackRow(
             modifier = Modifier
                 .size(48.dp)
                 .clip(FlixTheme.shapes.sm)
-                .background(FlixTheme.colors.surfaceVariant)
+                .background(FlixTheme.colors.surfaceVariant),
         )
-
         Column(Modifier.weight(1f)) {
             Text(
                 text = title,
                 style = FlixTheme.typography.subtitle,
-                color = FlixTheme.colors.textPrimary,
+                color = if (isCurrent) FlixTheme.colors.primaryContent else FlixTheme.colors.textPrimary,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = subtitle,
                 style = FlixTheme.typography.bodySmall,
                 color = FlixTheme.colors.textSecondary,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        if (duration != null) {
-            Text(
+        when {
+            isCurrent -> NowPlayingEqualizer(animated = isPlaying)
+            duration != null -> Text(
                 text = duration,
                 style = FlixTheme.typography.caption,
-                color = FlixTheme.colors.textTertiary
+                color = FlixTheme.colors.textTertiary,
             )
         }
     }
 }
+
+/** Which track is playing, so lists can mark its row. */
+data class NowPlayingMarker(
+    val trackId: String? = null,
+    val isPlaying: Boolean = false,
+)

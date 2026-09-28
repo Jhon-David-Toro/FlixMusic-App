@@ -15,4 +15,8 @@ class MusicRepositoryImpl @Inject constructor(
             .map { songDto -> songDto.toTrack() }
             .distinctBy { it.id }
     }
+
+    override suspend fun prefetch(trackId: String) = apiCall {
+        api.prefetchStream(trackId)
+    }
 }

@@ -8,8 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.data.repository.RecentSearchesRepository
 import com.flix.music.core.model.FlixException
+import com.flix.music.core.model.Track
 import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.model.distinctArtists
+import com.flix.music.core.player.PlaybackSource
+import com.flix.music.core.player.PlayerController
+import com.flix.music.core.player.PlayerState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,7 +33,10 @@ import javax.inject.Inject
 class SearchViewModel @Inject constructor(
     private val repository: MusicRepository,
     private val recentSearchesRepository: RecentSearchesRepository,
+    private val playerController: PlayerController,
 ) : ViewModel() {
+
+    val playerState: StateFlow<PlayerState> = playerController.state
 
     /** Field text. Snapshot state (not a Flow) so the text field never lags or jumps. */
     var query by mutableStateOf("")
@@ -93,19 +100,28 @@ class SearchViewModel @Inject constructor(
         viewModelScope.launch { recentSearchesRepository.clear() }
     }
 
-    private fun isShowingResults(): Boolean = when (val state = _uiState.value) {
-        is SearchUiState.Results -> true
-        is SearchUiState.Loading -> state.previous != null
-        else -> false
+    /** Plays [track] followed by the rest of the results (design: queue from search results). */
+    fun onTrackClick(track: Track) {
+        val tracks = currentResults()?.tracks ?: return
+        val startIndex = tracks.indexOfFirst { it.id == track.id }
+        if (startIndex < 0) return
+        playerController.play(
+            tracks = tracks.drop(startIndex),
+            startIndex = 0,
+            source = PlaybackSource.Search(query.trim()),
+        )
     }
 
+    private fun currentResults(): SearchUiState.Results? = when (val state = _uiState.value) {
+        is SearchUiState.Results -> state
+        is SearchUiState.Loading -> state.previous
+        else -> null
+    }
+
+    private fun isShowingResults(): Boolean = currentResults() != null
+
     private suspend fun search(searchQuery: String) {
-        val previousResults = when (val state = _uiState.value) {
-            is SearchUiState.Results -> state
-            is SearchUiState.Loading -> state.previous
-            else -> null
-        }
-        _uiState.value = SearchUiState.Loading(previous = previousResults)
+        _uiState.value = SearchUiState.Loading(previous = currentResults())
         _uiState.value = try {
             val tracks = repository.search(searchQuery)
             if (tracks.isEmpty()) {

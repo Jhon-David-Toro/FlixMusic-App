@@ -1,0 +1,47 @@
+package com.flix.music.core.player
+
+import kotlin.time.Duration
+
+/**
+ * Playback states from the design ("Estados de reproducción"), mapped from Media3's
+ * `Player.STATE_*` + `playWhenReady` + `PlaybackException`.
+ * Offline and Unavailable arrive with connectivity and playability data.
+ */
+enum class PlaybackStatus { Idle, Loading, Buffering, Playing, Paused, Ended, Error }
+
+enum class RepeatMode { Off, All, One }
+
+/** What the player shows for a track: available instantly from the queue metadata. */
+data class NowPlaying(
+    val trackId: String,
+    val title: String,
+    val artist: String,
+    val artworkUrl: String?,
+)
+
+/** Where the current queue came from, shown as "Reproduciendo desde …". */
+sealed interface PlaybackSource {
+    data class Search(val query: String) : PlaybackSource
+    data class Genre(val name: String) : PlaybackSource
+}
+
+data class PlayerState(
+    val status: PlaybackStatus = PlaybackStatus.Idle,
+    val current: NowPlaying? = null,
+    val next: NowPlaying? = null,
+    val source: PlaybackSource? = null,
+    val position: Duration = Duration.ZERO,
+    val bufferedPosition: Duration = Duration.ZERO,
+    val duration: Duration? = null,
+    val shuffleEnabled: Boolean = false,
+    val repeatMode: RepeatMode = RepeatMode.Off,
+    val hasPrevious: Boolean = false,
+    val hasNext: Boolean = false,
+) {
+    val isActive: Boolean get() = status == PlaybackStatus.Playing || status == PlaybackStatus.Buffering
+}
+
+/** One-off events the UI shows as a snackbar. */
+sealed interface PlayerEvent {
+    data class TrackSkipped(val title: String) : PlayerEvent
+}

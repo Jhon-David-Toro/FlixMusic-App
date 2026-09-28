@@ -28,4 +28,6 @@ class FakeMusicRepository : MusicRepository {
         error?.let { throw FlixException(it) }
         return tracks
     }
+
+    override suspend fun prefetch(trackId: String) = Unit
 }

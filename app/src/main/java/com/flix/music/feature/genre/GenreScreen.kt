@@ -42,6 +42,7 @@ import com.flix.music.core.designsystem.component.ArtistCarousel
 import com.flix.music.core.designsystem.component.ErrorStateView
 import com.flix.music.core.designsystem.component.FlixPrimaryButton
 import com.flix.music.core.designsystem.component.FlixSecondaryButton
+import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.designsystem.component.SectionHeader
 import com.flix.music.core.designsystem.component.SkeletonBox
 import com.flix.music.core.designsystem.component.StateView
@@ -79,13 +80,21 @@ fun GenreScreen(
     viewModel: GenreViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val playerState by viewModel.playerState.collectAsStateWithLifecycle()
     val actions = remember(viewModel, onBack) {
-        GenreActions(onBack = onBack, onRetry = viewModel::onRetry)
+        GenreActions(
+            onBack = onBack,
+            onRetry = viewModel::onRetry,
+            onPlay = viewModel::onPlay,
+            onShuffle = viewModel::onShuffle,
+            onTrackClick = viewModel::onTrackClick,
+        )
     }
     GenreContent(
         genre = viewModel.genre,
         uiState = uiState,
         actions = actions,
+        nowPlaying = NowPlayingMarker(playerState.current?.trackId, playerState.isActive),
         modifier = modifier,
     )
 }
@@ -96,6 +105,7 @@ fun GenreContent(
     uiState: GenreUiState,
     actions: GenreActions,
     modifier: Modifier = Modifier,
+    nowPlaying: NowPlayingMarker = NowPlayingMarker(),
 ) {
     var showAllSongs by rememberSaveable { mutableStateOf(false) }
 
@@ -142,6 +152,7 @@ fun GenreContent(
                 content = uiState,
                 showAllSongs = showAllSongs,
                 onShowAllSongs = { showAllSongs = true },
+                nowPlaying = nowPlaying,
                 actions = actions,
             )
         }
@@ -208,6 +219,7 @@ private fun LazyListScope.genreSections(
     content: GenreUiState.Content,
     showAllSongs: Boolean,
     onShowAllSongs: () -> Unit,
+    nowPlaying: NowPlayingMarker,
     actions: GenreActions,
 ) {
     val hasMoreSongs = content.tracks.size > SONGS_PREVIEW_COUNT
@@ -227,6 +239,8 @@ private fun LazyListScope.genreSections(
             artworkUrl = track.artworkUrl,
             duration = track.duration?.toClock(),
             onClick = { actions.onTrackClick(track) },
+            isCurrent = track.id == nowPlaying.trackId,
+            isPlaying = nowPlaying.isPlaying,
         )
     }
 

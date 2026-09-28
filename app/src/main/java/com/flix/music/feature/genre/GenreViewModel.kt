@@ -7,8 +7,12 @@ import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.model.FlixException
 import com.flix.music.core.model.Genre
 import com.flix.music.core.model.Genres
+import com.flix.music.core.model.Track
 import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.model.distinctArtists
+import com.flix.music.core.player.PlaybackSource
+import com.flix.music.core.player.PlayerController
+import com.flix.music.core.player.PlayerState
 import com.flix.music.feature.genre.navigation.GenreRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +29,10 @@ import javax.inject.Inject
 class GenreViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val repository: MusicRepository,
+    private val playerController: PlayerController,
 ) : ViewModel() {
+
+    val playerState: StateFlow<PlayerState> = playerController.state
 
     /**
      * Reads the [GenreRoute.genreId] argument by name instead of `toRoute()`, so plain
@@ -43,6 +50,31 @@ class GenreViewModel @Inject constructor(
     }
 
     fun onRetry() = load()
+
+    fun onPlay() = playGenre(startIndex = 0, shuffle = false)
+
+    /** "Aleatorio": shuffle on, starting from a random song. */
+    fun onShuffle() {
+        val tracks = contentTracks() ?: return
+        playGenre(startIndex = tracks.indices.random(), shuffle = true)
+    }
+
+    fun onTrackClick(track: Track) {
+        val startIndex = contentTracks()?.indexOfFirst { it.id == track.id } ?: return
+        if (startIndex >= 0) playGenre(startIndex = startIndex, shuffle = false)
+    }
+
+    private fun playGenre(startIndex: Int, shuffle: Boolean) {
+        val tracks = contentTracks() ?: return
+        playerController.play(
+            tracks = tracks,
+            startIndex = startIndex,
+            source = PlaybackSource.Genre(genre.name),
+            shuffle = shuffle,
+        )
+    }
+
+    private fun contentTracks(): List<Track>? = (_uiState.value as? GenreUiState.Content)?.tracks
 
     private fun load() {
         viewModelScope.launch {

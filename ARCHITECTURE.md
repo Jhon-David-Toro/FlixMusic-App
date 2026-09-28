@@ -29,7 +29,7 @@ Un solo módulo de Gradle (`:app`) con paquetes que imitan módulos futuros:
 | `core/model` | Modelos de dominio: `Track`, `Artist`, `Album`, `Playlist`, `QueueItem`… Clases de datos puras. |
 | `core/data` | DTOs de la API, cliente HTTP, DataStore/Room, mappers DTO → dominio, interfaces e implementaciones de repositories. |
 | `core/navigation` | Tipos de navegación compartidos entre features (`TopLevelRoute`). |
-| `core/player` *(futuro)* | Media3 / ExoPlayer y estado de reproducción. |
+| `core/player` | `PlayerController` (interfaz) y su implementación con Media3: servicio en segundo plano, cola, estados de reproducción y precarga de la siguiente pista. |
 | `feature/<nombre>` | Una carpeta por funcionalidad (`home`, `search`, `genre`, `library`…): su pantalla, su ViewModel, su `UiState` y su ruta de navegación. |
 
 ### Navegación
@@ -46,7 +46,7 @@ Un solo módulo de Gradle (`:app`) con paquetes que imitan módulos futuros:
 4. **Los DTO no salen de `core/data`.** Fuera de ese paquete solo existen modelos de dominio.
 
 ```
-feature/*   ──▶ core/designsystem, core/model, core/data (solo interfaces)
+feature/*   ──▶ core/designsystem, core/model, core/data y core/player (solo interfaces)
 core/data   ──▶ core/model
 core/player ──▶ core/model, core/data
 ```

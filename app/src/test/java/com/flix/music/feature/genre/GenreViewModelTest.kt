@@ -7,7 +7,9 @@ import com.flix.music.core.model.FlixError
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.model.distinctArtists
+import com.flix.music.core.player.PlaybackSource
 import com.flix.music.testing.FakeMusicRepository
+import com.flix.music.testing.FakePlayerController
 import com.flix.music.testing.MainDispatcherRule
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -21,12 +23,45 @@ class GenreViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val repository = FakeMusicRepository()
+    private val playerController = FakePlayerController()
 
     private val masterOfPuppets =
         Track("1", "Master of Puppets", listOf(ArtistRef("m", "Metallica")), AlbumRef("mop", "Master of Puppets"), null, null)
+    private val raining =
+        Track("2", "Raining Blood", listOf(ArtistRef("s", "Slayer")), AlbumRef("rib", "Reign in Blood"), null, null)
 
     private fun genreViewModel(genreId: String = "metal") =
-        GenreViewModel(SavedStateHandle(mapOf("genreId" to genreId)), repository)
+        GenreViewModel(SavedStateHandle(mapOf("genreId" to genreId)), repository, playerController)
+
+    @Test
+    fun `reproducir pone todo el género en la cola desde la primera canción`() = runTest {
+        repository.tracks = listOf(masterOfPuppets, raining)
+        val viewModel = genreViewModel()
+        advanceUntilIdle()
+
+        viewModel.onPlay()
+
+        assertEquals(
+            FakePlayerController.PlayRequest(
+                tracks = listOf(masterOfPuppets, raining),
+                startIndex = 0,
+                source = PlaybackSource.Genre("Metal"),
+                shuffle = false,
+            ),
+            playerController.lastPlayRequest,
+        )
+    }
+
+    @Test
+    fun `aleatorio activa el modo aleatorio`() = runTest {
+        repository.tracks = listOf(masterOfPuppets, raining)
+        val viewModel = genreViewModel()
+        advanceUntilIdle()
+
+        viewModel.onShuffle()
+
+        assertEquals(true, playerController.lastPlayRequest?.shuffle)
+    }
 
     @Test
     fun `busca con la consulta curada del género y deriva artistas y álbumes`() = runTest {

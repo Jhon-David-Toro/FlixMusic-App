@@ -49,6 +49,7 @@ import com.flix.music.core.designsystem.component.GENRE_TILE_COMPACT_HEIGHT
 import com.flix.music.core.designsystem.component.GenreTile
 import com.flix.music.core.designsystem.component.LoadingHairline
 import com.flix.music.core.designsystem.component.MediaCard
+import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.designsystem.component.SearchField
 import com.flix.music.core.designsystem.component.SectionHeader
 import com.flix.music.core.designsystem.component.SkeletonBox
@@ -96,6 +97,7 @@ fun SearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
+    val playerState by viewModel.playerState.collectAsStateWithLifecycle()
     val actions = remember(viewModel, onGenreClick) {
         SearchActions(
             onQueryChange = viewModel::onQueryChange,
@@ -106,6 +108,8 @@ fun SearchScreen(
             onRemoveRecent = viewModel::onRemoveRecent,
             onClearRecents = viewModel::onClearRecents,
             onGenreClick = onGenreClick,
+            onTrackClick = viewModel::onTrackClick,
+            onTrackOpen = viewModel::onTrackClick,
         )
     }
 
@@ -114,6 +118,7 @@ fun SearchScreen(
         uiState = uiState,
         filter = viewModel.filter,
         recentSearches = recentSearches,
+        nowPlaying = NowPlayingMarker(playerState.current?.trackId, playerState.isActive),
         actions = actions,
         modifier = modifier,
     )
@@ -126,6 +131,7 @@ fun SearchContent(
     filter: SearchFilter,
     recentSearches: List<String>,
     actions: SearchActions,
+    nowPlaying: NowPlayingMarker = NowPlayingMarker(),
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize()) {
@@ -156,10 +162,10 @@ fun SearchContent(
         when (uiState) {
             SearchUiState.Idle -> SearchIdle(recentSearches, actions)
             is SearchUiState.Typing -> SearchTyping(query, uiState.suggestions, actions)
-            is SearchUiState.Loading -> SearchLoading(uiState.previous, filter, actions)
+            is SearchUiState.Loading -> SearchLoading(uiState.previous, filter, nowPlaying, actions)
             is SearchUiState.Empty -> SearchEmpty(uiState, actions)
             is SearchUiState.Error -> SearchError(uiState.error, recentSearches, actions)
-            is SearchUiState.Results -> SearchResults(uiState, filter, actions)
+            is SearchUiState.Results -> SearchResults(uiState, filter, nowPlaying, actions)
         }
     }
 }
@@ -355,11 +361,12 @@ private fun FilterChipsRow(
 private fun SearchLoading(
     previous: SearchUiState.Results?,
     filter: SearchFilter,
+    nowPlaying: NowPlayingMarker,
     actions: SearchActions,
 ) {
     if (previous != null) {
         Box(Modifier.alpha(DIMMED_ALPHA)) {
-            SearchResults(results = previous, filter = filter, actions = actions)
+            SearchResults(results = previous, filter = filter, nowPlaying = nowPlaying, actions = actions)
         }
         return
     }
@@ -388,6 +395,7 @@ private fun SearchLoading(
 private fun SearchResults(
     results: SearchUiState.Results,
     filter: SearchFilter,
+    nowPlaying: NowPlayingMarker,
     actions: SearchActions,
 ) {
     Column {
@@ -396,8 +404,8 @@ private fun SearchResults(
             contentPadding = PaddingValues(top = FlixTheme.spacing.lg, bottom = FlixTheme.spacing.xxl),
         ) {
             when (filter) {
-                SearchFilter.All -> allResults(results, actions)
-                SearchFilter.Songs -> trackItems(results.tracks, actions.onTrackClick)
+                SearchFilter.All -> allResults(results, nowPlaying, actions)
+                SearchFilter.Songs -> trackItems(results.tracks, nowPlaying, actions.onTrackClick)
                 SearchFilter.Artists -> cardGrid(results.artists, key = { it.id }) { artist, cardModifier ->
                     MediaCard(
                         title = artist.name,
@@ -422,7 +430,11 @@ private fun SearchResults(
     }
 }
 
-private fun LazyListScope.allResults(results: SearchUiState.Results, actions: SearchActions) {
+private fun LazyListScope.allResults(
+    results: SearchUiState.Results,
+    nowPlaying: NowPlayingMarker,
+    actions: SearchActions,
+) {
     val bestTrack = results.tracks.first()
     item(key = "best") {
         BestResultCard(
@@ -446,7 +458,7 @@ private fun LazyListScope.allResults(results: SearchUiState.Results, actions: Se
                 modifier = Modifier.padding(top = FlixTheme.spacing.sectionGap),
             )
         }
-        trackItems(moreSongs, actions.onTrackClick)
+        trackItems(moreSongs, nowPlaying, actions.onTrackClick)
     }
 
     if (results.artists.isNotEmpty()) {
@@ -474,7 +486,11 @@ private fun LazyListScope.allResults(results: SearchUiState.Results, actions: Se
     }
 }
 
-private fun LazyListScope.trackItems(tracks: List<Track>, onTrackClick: (Track) -> Unit) {
+private fun LazyListScope.trackItems(
+    tracks: List<Track>,
+    nowPlaying: NowPlayingMarker,
+    onTrackClick: (Track) -> Unit,
+) {
     items(tracks, key = { it.id }) { track ->
         TrackRow(
             title = track.title,
@@ -484,6 +500,8 @@ private fun LazyListScope.trackItems(tracks: List<Track>, onTrackClick: (Track) 
             artworkUrl = track.artworkUrl,
             duration = track.duration?.toClock(),
             onClick = { onTrackClick(track) },
+            isCurrent = track.id == nowPlaying.trackId,
+            isPlaying = nowPlaying.isPlaying,
         )
     }
 }

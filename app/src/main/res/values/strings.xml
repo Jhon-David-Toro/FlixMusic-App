@@ -43,6 +43,33 @@
     <string name="genre_empty_title">Aún no hay canciones de %1$s</string>
     <string name="genre_empty_body">No encontramos canciones para este género ahora mismo. Vuelve a intentarlo más tarde.</string>
 
+    <string name="player_open">Abrir reproductor</string>
+    <string name="player_close">Cerrar reproductor</string>
+    <string name="player_playing_from">Reproduciendo desde</string>
+    <string name="player_source_search">Búsqueda “%1$s”</string>
+    <string name="player_source_genre">Género %1$s</string>
+    <string name="player_play">Reproducir</string>
+    <string name="player_pause">Pausar</string>
+    <string name="player_replay">Volver a empezar</string>
+    <string name="player_next">Siguiente</string>
+    <string name="player_previous">Anterior</string>
+    <string name="player_shuffle">Aleatorio</string>
+    <string name="player_repeat">Repetir</string>
+    <string name="player_repeat_off">Desactivado</string>
+    <string name="player_repeat_all">Toda la cola</string>
+    <string name="player_repeat_one">Esta canción</string>
+    <string name="player_seek">Posición de la canción</string>
+    <string name="player_up_next">A continuación</string>
+    <string name="player_error">No pudimos reproducir esta canción ahora.</string>
+    <string name="player_skip">Saltar</string>
+    <string name="player_mini_error">No se pudo reproducir</string>
+    <string name="player_queue_ended">Fin de la cola</string>
+    <string name="player_track_skipped">“%1$s” no está disponible ahora. Pasamos a la siguiente.</string>
+    <string name="now_playing">Reproduciendo</string>
+    <string name="now_paused">En pausa</string>
+    <string name="state_on">Activado</string>
+    <string name="state_off">Desactivado</string>
+
     <string name="action_retry">Reintentar</string>
     <string name="error_no_connection_title">Sin conexión</string>
     <string name="error_no_connection_body">Comprueba tu conexión e inténtalo nuevamente.</string>

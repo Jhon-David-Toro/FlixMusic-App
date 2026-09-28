@@ -3,7 +3,9 @@ package com.flix.music.feature.search
 import com.flix.music.core.model.ArtistRef
 import com.flix.music.core.model.FlixError
 import com.flix.music.core.model.Track
+import com.flix.music.core.player.PlaybackSource
 import com.flix.music.testing.FakeMusicRepository
+import com.flix.music.testing.FakePlayerController
 import com.flix.music.testing.FakeRecentSearchesRepository
 import com.flix.music.testing.MainDispatcherRule
 import kotlinx.coroutines.test.advanceTimeBy
@@ -22,11 +24,13 @@ class SearchViewModelTest {
 
     private val repository = FakeMusicRepository()
     private val recentSearchesRepository = FakeRecentSearchesRepository()
+    private val playerController = FakePlayerController()
+
     /**
      * Built lazily so it is created after [mainDispatcherRule] installs the test
      * dispatcher: the ViewModel starts collecting recent searches in its constructor.
      */
-    private val viewModel by lazy { SearchViewModel(repository, recentSearchesRepository) }
+    private val viewModel by lazy { SearchViewModel(repository, recentSearchesRepository, playerController) }
 
     private val fadeToBlack = Track("1", "Fade To Black", listOf(ArtistRef(null, "Metallica")), null, null, null)
     private val fadeToBlackResults =
@@ -59,7 +63,7 @@ class SearchViewModelTest {
     @Test
     fun `al escribir sugiere las búsquedas recientes que coinciden`() = runTest {
         val recents = FakeRecentSearchesRepository(listOf("fade to black", "eminem killshot"))
-        val typingViewModel = SearchViewModel(repository, recents)
+        val typingViewModel = SearchViewModel(repository, recents, playerController)
         runCurrent()
 
         typingViewModel.onQueryChange("fade")
@@ -70,7 +74,7 @@ class SearchViewModelTest {
     @Test
     fun `sin resultados muestra el estado vacío con recientes parecidas`() = runTest {
         val recents = FakeRecentSearchesRepository(listOf("fade to black", "metallica"))
-        val emptyViewModel = SearchViewModel(repository, recents)
+        val emptyViewModel = SearchViewModel(repository, recents, playerController)
         repository.tracks = emptyList()
 
         emptyViewModel.onQueryChange("fdae to blak")
@@ -153,7 +157,7 @@ class SearchViewModelTest {
     @Test
     fun `quitar y borrar recientes`() = runTest {
         val recents = FakeRecentSearchesRepository(listOf("fade to black", "metallica"))
-        val recentsViewModel = SearchViewModel(repository, recents)
+        val recentsViewModel = SearchViewModel(repository, recents, playerController)
         runCurrent()
 
         recentsViewModel.onRemoveRecent("fade to black")
@@ -163,6 +167,27 @@ class SearchViewModelTest {
         recentsViewModel.onClearRecents()
         runCurrent()
         assertEquals(emptyList<String>(), recentsViewModel.recentSearches.value)
+    }
+
+    @Test
+    fun `tocar una canción reproduce desde ella hasta el final de los resultados`() = runTest {
+        val killshot = Track("2", "Killshot", listOf(ArtistRef(null, "Eminem")), null, null, null)
+        val lately = Track("3", "Lately", listOf(ArtistRef(null, "Luar La L")), null, null, null)
+        repository.tracks = listOf(fadeToBlack, killshot, lately)
+        viewModel.onQueryChange("fade")
+        advanceUntilIdle()
+
+        viewModel.onTrackClick(killshot)
+
+        assertEquals(
+            FakePlayerController.PlayRequest(
+                tracks = listOf(killshot, lately),
+                startIndex = 0,
+                source = PlaybackSource.Search("fade"),
+                shuffle = false,
+            ),
+            playerController.lastPlayRequest,
+        )
     }
 
     @Test
