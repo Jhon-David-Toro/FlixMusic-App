@@ -1,19 +1,18 @@
 package com.flix.music.navigation
 
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import com.flix.music.core.designsystem.theme.FlixMotion
+import com.flix.music.core.designsystem.theme.FlixTransitions
+import com.flix.music.feature.genre.navigation.genreScreen
+import com.flix.music.feature.genre.navigation.navigateToGenre
 import com.flix.music.feature.home.navigation.HomeRoute
 import com.flix.music.feature.home.navigation.homeScreen
 import com.flix.music.feature.library.navigation.libraryScreen
-import com.flix.music.feature.search.navigation.searchScreen
+import com.flix.music.feature.search.navigation.searchGraph
 
 @Composable
 fun FlixNavHost(
@@ -24,23 +23,25 @@ fun FlixNavHost(
         navController = navController,
         startDestination = HomeRoute,
         modifier = modifier,
-        exitTransition = { tabExit() },
-        enterTransition = { tabEnter() },
-        popExitTransition = { tabExit() },
-        popEnterTransition = { tabEnter() },
+        exitTransition = { FlixTransitions.tabExit() },
+        enterTransition = { FlixTransitions.tabEnter() },
+        popExitTransition = { FlixTransitions.tabExit() },
+        popEnterTransition = { FlixTransitions.tabEnter() },
     ) {
         homeScreen()
-        searchScreen()
+        searchGraph(
+            onGenreClick = { genre -> navController.navigateToGenre(genre.id) },
+        ) {
+            genreScreen(onBack = navController::popBackStack)
+        }
         libraryScreen()
     }
 }
 
-private fun tabExit() = fadeOut(tween(FlixMotion.TAB_EXIT, easing = FlixMotion.Accelerate))
-
-private fun tabEnter() = fadeIn(
-    tween(FlixMotion.TAB_ENTER, delayMillis = FlixMotion.TAB_EXIT, easing = FlixMotion.Decelerate)
-)
-
+/**
+ * Switches tabs keeping one back stack per tab: the tab being left is saved and
+ * the target tab restores its own stack.
+ */
 fun NavController.navigateToTopLevel(destination: TopLevelDestination) {
     navigate(destination.route) {
         popUpTo(graph.findStartDestination().id) {

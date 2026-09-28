@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flix.music.core.data.repository.MusicRepository
+import com.flix.music.core.data.repository.RecentSearchesRepository
 import com.flix.music.core.model.FlixException
 import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.model.distinctArtists
@@ -13,62 +14,107 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Search screen logic: debounced search while typing, immediate search for explicit
+ * actions (recent, mood, suggestion, retry), and recent searches saved on success.
+ */
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     private val repository: MusicRepository,
+    private val recentSearchesRepository: RecentSearchesRepository,
 ) : ViewModel() {
 
+    /** Field text. Snapshot state (not a Flow) so the text field never lags or jumps. */
     var query by mutableStateOf("")
+        private set
+
+    var filter by mutableStateOf(SearchFilter.All)
         private set
 
     private val _uiState = MutableStateFlow<SearchUiState>(SearchUiState.Idle)
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
+    val recentSearches: StateFlow<List<String>> = recentSearchesRepository.recentSearches
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
     private var searchJob: Job? = null
-
-    var filter by mutableStateOf(SearchFilter.All)
-        private set
-
-    fun onFilterChange(newFilter: SearchFilter) {
-        filter = newFilter
-    }
 
     fun onQueryChange(newQuery: String) {
         query = newQuery
         filter = SearchFilter.All
         searchJob?.cancel()
 
-        if (newQuery.trim().length < MIN_QUERY_LENGTH) {
+        val text = newQuery.trim()
+        if (text.isEmpty()) {
             _uiState.value = SearchUiState.Idle
             return
         }
-        searchJob = viewModelScope.launch {
-            delay(DEBOUNCE_MS.milliseconds)
-            search(newQuery.trim())
+        if (!isShowingResults()) {
+            _uiState.value = SearchUiState.Typing(typingSuggestions(text, recentSearches.value))
         }
+        if (text.length < MIN_QUERY_LENGTH) return
+
+        searchJob = viewModelScope.launch {
+            delay(DEBOUNCE_MS)
+            search(text)
+        }
+    }
+
+    /** Searches [text] right away, without debounce, and puts it in the field. */
+    fun onSearchNow(text: String) {
+        val trimmedText = text.trim()
+        if (trimmedText.isEmpty()) return
+        query = trimmedText
+        filter = SearchFilter.All
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch { search(trimmedText) }
     }
 
     fun onClear() = onQueryChange("")
 
-    fun onRetry() {
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch { search(query.trim()) }
+    fun onRetry() = onSearchNow(query)
+
+    fun onFilterChange(newFilter: SearchFilter) {
+        filter = newFilter
+    }
+
+    fun onRemoveRecent(recentSearch: String) {
+        viewModelScope.launch { recentSearchesRepository.remove(recentSearch) }
+    }
+
+    fun onClearRecents() {
+        viewModelScope.launch { recentSearchesRepository.clear() }
+    }
+
+    private fun isShowingResults(): Boolean = when (val state = _uiState.value) {
+        is SearchUiState.Results -> true
+        is SearchUiState.Loading -> state.previous != null
+        else -> false
     }
 
     private suspend fun search(searchQuery: String) {
-        val previousResults = _uiState.value as? SearchUiState.Results
+        val previousResults = when (val state = _uiState.value) {
+            is SearchUiState.Results -> state
+            is SearchUiState.Loading -> state.previous
+            else -> null
+        }
         _uiState.value = SearchUiState.Loading(previous = previousResults)
         _uiState.value = try {
             val tracks = repository.search(searchQuery)
             if (tracks.isEmpty()) {
-                SearchUiState.Empty(searchQuery)
+                SearchUiState.Empty(
+                    query = searchQuery,
+                    suggestions = similarRecentSearches(searchQuery, recentSearches.value),
+                )
             } else {
+                recentSearchesRepository.add(searchQuery)
                 SearchUiState.Results(
                     tracks = tracks,
                     artists = tracks.distinctArtists(),

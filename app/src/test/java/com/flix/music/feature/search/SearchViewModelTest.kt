@@ -4,9 +4,11 @@ import com.flix.music.core.model.ArtistRef
 import com.flix.music.core.model.FlixError
 import com.flix.music.core.model.Track
 import com.flix.music.testing.FakeMusicRepository
+import com.flix.music.testing.FakeRecentSearchesRepository
 import com.flix.music.testing.MainDispatcherRule
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -19,46 +21,87 @@ class SearchViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val repository = FakeMusicRepository()
-    private val viewModel = SearchViewModel(repository)
+    private val recentSearchesRepository = FakeRecentSearchesRepository()
+    /**
+     * Built lazily so it is created after [mainDispatcherRule] installs the test
+     * dispatcher: the ViewModel starts collecting recent searches in its constructor.
+     */
+    private val viewModel by lazy { SearchViewModel(repository, recentSearchesRepository) }
 
     private val fadeToBlack = Track("1", "Fade To Black", listOf(ArtistRef(null, "Metallica")), null, null, null)
+    private val fadeToBlackResults =
+        SearchUiState.Results(listOf(fadeToBlack), artists = emptyList(), albums = emptyList())
 
     @Test
     fun `escribir rápido hace una sola búsqueda`() = runTest {
         repository.tracks = listOf(fadeToBlack)
 
-        // Simula teclear letra a letra, sin pausa.
         viewModel.onQueryChange("fa")
         viewModel.onQueryChange("fad")
         viewModel.onQueryChange("fade")
         advanceTimeBy(299.milliseconds)
         assertEquals(0, repository.searchCount)
+
         advanceUntilIdle()
         assertEquals(1, repository.searchCount)
-        assertEquals(
-            // fadeToBlack tiene un artista sin id y no tiene álbum: los derivados salen vacíos.
-            SearchUiState.Results(listOf(fadeToBlack), artists = emptyList(), albums = emptyList()),
-            viewModel.uiState.value,
-        )
+        assertEquals(fadeToBlackResults, viewModel.uiState.value)
     }
 
     @Test
-    fun `menos de dos letras no busca y queda en reposo`() = runTest {
+    fun `menos de dos letras no busca y muestra sugerencias`() = runTest {
         viewModel.onQueryChange("f")
         advanceUntilIdle()
 
         assertEquals(0, repository.searchCount)
-        assertEquals(SearchUiState.Idle, viewModel.uiState.value)
+        assertEquals(SearchUiState.Typing(emptyList()), viewModel.uiState.value)
     }
 
     @Test
-    fun `sin resultados muestra el estado vacío con la búsqueda`() = runTest {
+    fun `al escribir sugiere las búsquedas recientes que coinciden`() = runTest {
+        val recents = FakeRecentSearchesRepository(listOf("fade to black", "eminem killshot"))
+        val typingViewModel = SearchViewModel(repository, recents)
+        runCurrent()
+
+        typingViewModel.onQueryChange("fade")
+
+        assertEquals(SearchUiState.Typing(listOf("fade to black")), typingViewModel.uiState.value)
+    }
+
+    @Test
+    fun `sin resultados muestra el estado vacío con recientes parecidas`() = runTest {
+        val recents = FakeRecentSearchesRepository(listOf("fade to black", "metallica"))
+        val emptyViewModel = SearchViewModel(repository, recents)
         repository.tracks = emptyList()
 
-        viewModel.onQueryChange("qwxzqwxz")
+        emptyViewModel.onQueryChange("fdae to blak")
         advanceUntilIdle()
 
-        assertEquals(SearchUiState.Empty("qwxzqwxz"), viewModel.uiState.value)
+        assertEquals(
+            SearchUiState.Empty("fdae to blak", suggestions = listOf("fade to black")),
+            emptyViewModel.uiState.value,
+        )
+    }
+
+    @Test
+    fun `una búsqueda con resultados se guarda en recientes`() = runTest {
+        repository.tracks = listOf(fadeToBlack)
+
+        viewModel.onQueryChange("fade to black")
+        advanceUntilIdle()
+
+        assertEquals(listOf("fade to black"), viewModel.recentSearches.value)
+    }
+
+    @Test
+    fun `buscar ya no espera el debounce y pone el texto en el campo`() = runTest {
+        repository.tracks = listOf(fadeToBlack)
+
+        viewModel.onSearchNow("metallica")
+        runCurrent()
+
+        assertEquals("metallica", viewModel.query)
+        assertEquals(1, repository.searchCount)
+        assertEquals("metallica", repository.lastQuery)
     }
 
     @Test
@@ -76,16 +119,50 @@ class SearchViewModelTest {
         repository.error = FlixError.ServerUnreachable
         viewModel.onQueryChange("fade")
         advanceUntilIdle()
+
         repository.error = null
         repository.tracks = listOf(fadeToBlack)
         viewModel.onRetry()
         advanceUntilIdle()
 
-        assertEquals(
-            // fadeToBlack tiene un artista sin id y no tiene álbum: los derivados salen vacíos.
-            SearchUiState.Results(listOf(fadeToBlack), artists = emptyList(), albums = emptyList()),
-            viewModel.uiState.value,
-        )
+        assertEquals(fadeToBlackResults, viewModel.uiState.value)
+    }
+
+    @Test
+    fun `mientras carga una búsqueda nueva, conserva los resultados anteriores`() = runTest {
+        repository.tracks = listOf(fadeToBlack)
+        viewModel.onQueryChange("fade")
+        advanceUntilIdle()
+
+        repository.responseDelayMillis = 1_000
+        viewModel.onQueryChange("fade to")
+        advanceTimeBy(301.milliseconds)
+
+        assertEquals(SearchUiState.Loading(previous = fadeToBlackResults), viewModel.uiState.value)
+    }
+
+    @Test
+    fun `una búsqueda nueva vuelve al filtro Todo`() = runTest {
+        viewModel.onFilterChange(SearchFilter.Artists)
+
+        viewModel.onQueryChange("fade")
+
+        assertEquals(SearchFilter.All, viewModel.filter)
+    }
+
+    @Test
+    fun `quitar y borrar recientes`() = runTest {
+        val recents = FakeRecentSearchesRepository(listOf("fade to black", "metallica"))
+        val recentsViewModel = SearchViewModel(repository, recents)
+        runCurrent()
+
+        recentsViewModel.onRemoveRecent("fade to black")
+        runCurrent()
+        assertEquals(listOf("metallica"), recentsViewModel.recentSearches.value)
+
+        recentsViewModel.onClearRecents()
+        runCurrent()
+        assertEquals(emptyList<String>(), recentsViewModel.recentSearches.value)
     }
 
     @Test
@@ -98,28 +175,5 @@ class SearchViewModelTest {
 
         assertEquals("", viewModel.query)
         assertEquals(SearchUiState.Idle, viewModel.uiState.value)
-    }
-
-    @Test
-    fun `mientras carga una búsqueda nueva, conserva los resultados anteriores`() = runTest {
-        repository.tracks = listOf(fadeToBlack)
-        viewModel.onQueryChange("fade")
-        advanceUntilIdle()
-        val firstResults = viewModel.uiState.value as SearchUiState.Results
-
-        repository.responseDelayMillis = 1_000 // la siguiente respuesta tarda 1 s
-        viewModel.onQueryChange("fade to")
-        advanceTimeBy(301.milliseconds)         // pasa el debounce: ya está buscando
-
-        assertEquals(SearchUiState.Loading(previous = firstResults), viewModel.uiState.value)
-    }
-
-    @Test
-    fun `una búsqueda nueva vuelve al filtro Todo`() = runTest {
-        viewModel.onFilterChange(SearchFilter.Artists)
-
-        viewModel.onQueryChange("fade")
-
-        assertEquals(SearchFilter.All, viewModel.filter)
     }
 }

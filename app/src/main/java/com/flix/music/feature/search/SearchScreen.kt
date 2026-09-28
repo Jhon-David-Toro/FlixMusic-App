@@ -12,35 +12,48 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.flix.music.R
+import com.flix.music.core.designsystem.component.AlbumCarousel
+import com.flix.music.core.designsystem.component.ArtistCarousel
 import com.flix.music.core.designsystem.component.BestResultCard
 import com.flix.music.core.designsystem.component.BestResultCardSkeleton
 import com.flix.music.core.designsystem.component.ErrorStateView
+import com.flix.music.core.designsystem.component.FlixChip
 import com.flix.music.core.designsystem.component.FlixFilterChip
+import com.flix.music.core.designsystem.component.GENRE_TILE_COMPACT_HEIGHT
+import com.flix.music.core.designsystem.component.GenreTile
 import com.flix.music.core.designsystem.component.LoadingHairline
 import com.flix.music.core.designsystem.component.MediaCard
 import com.flix.music.core.designsystem.component.SearchField
 import com.flix.music.core.designsystem.component.SectionHeader
 import com.flix.music.core.designsystem.component.SkeletonBox
 import com.flix.music.core.designsystem.component.StateView
+import com.flix.music.core.designsystem.component.SuggestionRow
 import com.flix.music.core.designsystem.component.TrackRow
 import com.flix.music.core.designsystem.component.TrackRowSkeleton
 import com.flix.music.core.designsystem.component.util.toClock
@@ -52,39 +65,56 @@ import com.flix.music.core.model.AlbumRef
 import com.flix.music.core.model.Artist
 import com.flix.music.core.model.ArtistRef
 import com.flix.music.core.model.FlixError
+import com.flix.music.core.model.Genre
+import com.flix.music.core.model.Genres
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.model.distinctArtists
 import kotlin.time.Duration.Companion.seconds
 
-// Valores del mockup searchres / sloading (escala 280 px → 360 dp).
-private const val SONGS_PREVIEW_COUNT = 3   // 3 filas bajo "Canciones" en "Todo"
-private val ARTIST_CARD_WIDTH = 108.dp      // acard: 84 px
-private val ALBUM_CARD_WIDTH = 136.dp       // card a104: 104 px (patrón "Carrusel: tarjetas 136 dp")
-
-// Filas fantasma del mockup sloading: (ancho del título, ancho del subtítulo).
-private val SKELETON_ROW_WIDTHS = listOf(0.7f to 0.45f, 0.6f to 0.4f, 0.75f to 0.35f)
+/** Every user action on the Search screen. Defaults do nothing, which keeps previews short. */
+data class SearchActions(
+    val onQueryChange: (String) -> Unit = {},
+    val onClear: () -> Unit = {},
+    val onRetry: () -> Unit = {},
+    val onSearchNow: (String) -> Unit = {},
+    val onFilterChange: (SearchFilter) -> Unit = {},
+    val onRemoveRecent: (String) -> Unit = {},
+    val onClearRecents: () -> Unit = {},
+    val onGenreClick: (Genre) -> Unit = {},
+    val onTrackClick: (Track) -> Unit = {},
+    val onTrackOpen: (Track) -> Unit = {},
+    val onArtistClick: (Artist) -> Unit = {},
+    val onAlbumClick: (Album) -> Unit = {},
+)
 
 @Composable
 fun SearchScreen(
+    onGenreClick: (Genre) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
+    val actions = remember(viewModel, onGenreClick) {
+        SearchActions(
+            onQueryChange = viewModel::onQueryChange,
+            onClear = viewModel::onClear,
+            onRetry = viewModel::onRetry,
+            onSearchNow = viewModel::onSearchNow,
+            onFilterChange = viewModel::onFilterChange,
+            onRemoveRecent = viewModel::onRemoveRecent,
+            onClearRecents = viewModel::onClearRecents,
+            onGenreClick = onGenreClick,
+        )
+    }
 
     SearchContent(
         query = viewModel.query,
         uiState = uiState,
         filter = viewModel.filter,
-        onQueryChange = viewModel::onQueryChange,
-        onClear = viewModel::onClear,
-        onRetry = viewModel::onRetry,
-        onFilterChange = viewModel::onFilterChange,
-        // Se conectan en los próximos pasos: reproducir (8) y pantallas de detalle.
-        onTrackClick = {},
-        onTrackOpen = {},
-        onArtistClick = {},
-        onAlbumClick = {},
+        recentSearches = recentSearches,
+        actions = actions,
         modifier = modifier,
     )
 }
@@ -94,19 +124,10 @@ fun SearchContent(
     query: String,
     uiState: SearchUiState,
     filter: SearchFilter,
-    onQueryChange: (String) -> Unit,
-    onClear: () -> Unit,
-    onRetry: () -> Unit,
-    onFilterChange: (SearchFilter) -> Unit,
-    onTrackClick: (Track) -> Unit,     // reproducir
-    onTrackOpen: (Track) -> Unit,      // abrir el detalle (tarjeta "Mejor resultado")
-    onArtistClick: (Artist) -> Unit,
-    onAlbumClick: (Album) -> Unit,
+    recentSearches: List<String>,
+    actions: SearchActions,
     modifier: Modifier = Modifier,
 ) {
-    // Agrupa las acciones de la zona de resultados para pasarlas juntas.
-    val callbacks = ResultCallbacks(onFilterChange, onTrackClick, onTrackOpen, onArtistClick, onAlbumClick)
-
     Column(modifier.fillMaxSize()) {
         Text(
             text = stringResource(R.string.tab_search),
@@ -119,63 +140,194 @@ fun SearchContent(
         )
         SearchField(
             query = query,
-            onQueryChange = onQueryChange,
-            onClear = onClear,
+            onQueryChange = actions.onQueryChange,
+            onClear = actions.onClear,
             placeholder = stringResource(R.string.search_placeholder),
             clearLabel = stringResource(R.string.search_clear),
             modifier = Modifier.padding(horizontal = FlixTheme.spacing.gutter),
         )
-
         LoadingHairline(
             visible = uiState is SearchUiState.Loading,
             modifier = Modifier
                 .padding(horizontal = FlixTheme.spacing.gutter)
-                // Diseño: margin-top:-2px → la barra se apoya sobre el borde inferior del campo.
                 .offset(y = (-2).dp),
         )
 
         when (uiState) {
-            SearchUiState.Idle -> StateView(
-                icon = R.drawable.ic_search,
-                title = stringResource(R.string.search_idle_title),
-                body = stringResource(R.string.search_idle_body),
-            )
-            is SearchUiState.Loading -> SearchLoading(
-                previous = uiState.previous,
-                filter = filter,
-                callbacks = callbacks,
-            )
-            is SearchUiState.Empty -> StateView(
-                icon = R.drawable.ic_search_off,
-                title = stringResource(R.string.search_empty_title, uiState.query),
-                body = stringResource(R.string.search_empty_body),
-            )
-            is SearchUiState.Error -> ErrorStateView(
-                error = uiState.error,
-                onRetry = onRetry,
-                // Diseño (Red y errores → "502 en búsqueda"): texto propio de Buscar.
-                upstreamTitle = R.string.search_error_upstream_title,
-                upstreamBody = R.string.search_error_upstream_body,
-            )
-            is SearchUiState.Results -> SearchResults(
-                results = uiState,
-                filter = filter,
-                callbacks = callbacks,
-            )
+            SearchUiState.Idle -> SearchIdle(recentSearches, actions)
+            is SearchUiState.Typing -> SearchTyping(query, uiState.suggestions, actions)
+            is SearchUiState.Loading -> SearchLoading(uiState.previous, filter, actions)
+            is SearchUiState.Empty -> SearchEmpty(uiState, actions)
+            is SearchUiState.Error -> SearchError(uiState.error, recentSearches, actions)
+            is SearchUiState.Results -> SearchResults(uiState, filter, actions)
         }
     }
 }
 
-// Acciones de la zona de resultados, agrupadas para no pasar cinco lambdas por separado.
-private data class ResultCallbacks(
-    val onFilterChange: (SearchFilter) -> Unit,
-    val onTrackClick: (Track) -> Unit,
-    val onTrackOpen: (Track) -> Unit,
-    val onArtistClick: (Artist) -> Unit,
-    val onAlbumClick: (Album) -> Unit,
-)
+@Composable
+private fun SearchIdle(recentSearches: List<String>, actions: SearchActions) {
+    LazyColumn(contentPadding = PaddingValues(bottom = FlixTheme.spacing.xxl)) {
+        if (recentSearches.isNotEmpty()) {
+            item(key = "recents-header") {
+                SectionHeader(
+                    title = stringResource(R.string.search_recent),
+                    actionLabel = stringResource(R.string.search_clear_recents),
+                    onAction = actions.onClearRecents,
+                    modifier = Modifier.padding(top = FlixTheme.spacing.sectionGap),
+                )
+            }
+            items(recentSearches, key = { "recent-$it" }) { recentSearch ->
+                SuggestionRow(
+                    text = recentSearch,
+                    leadingIcon = R.drawable.ic_history,
+                    onClick = { actions.onSearchNow(recentSearch) },
+                    trailing = {
+                        IconButton(onClick = { actions.onRemoveRecent(recentSearch) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_close),
+                                contentDescription = stringResource(R.string.search_remove_recent, recentSearch),
+                                tint = FlixTheme.colors.textSecondary,
+                                modifier = Modifier.size(TRAILING_ICON_SIZE),
+                            )
+                        }
+                    },
+                )
+            }
+        }
 
-// Diseño (.chips): margin-top 12 px, separación 8 px, se desliza si no caben.
+        item(key = "moods-header") {
+            SectionHeader(
+                title = stringResource(R.string.search_moods),
+                modifier = Modifier.padding(top = FlixTheme.spacing.sectionGap, bottom = FlixTheme.spacing.md),
+            )
+        }
+        item(key = "moods") {
+            Row(
+                modifier = Modifier
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = FlixTheme.spacing.gutter),
+                horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.sm),
+            ) {
+                SearchMood.entries.forEach { mood ->
+                    FlixChip(
+                        label = stringResource(mood.label),
+                        onClick = { actions.onSearchNow(mood.query) },
+                        leadingIcon = mood.icon,
+                    )
+                }
+            }
+        }
+
+        item(key = "genres-header") {
+            SectionHeader(
+                title = stringResource(R.string.search_genres),
+                modifier = Modifier.padding(top = FlixTheme.spacing.sectionGap, bottom = FlixTheme.spacing.md),
+            )
+        }
+        items(Genres.all.chunked(2), key = { pair -> "genres-${pair.first().id}" }) { pair ->
+            Row(
+                modifier = Modifier.padding(
+                    start = FlixTheme.spacing.gutter,
+                    end = FlixTheme.spacing.gutter,
+                    bottom = FlixTheme.spacing.md,
+                ),
+                horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.md),
+            ) {
+                pair.forEach { genre ->
+                    GenreTile(
+                        name = genre.name,
+                        gradientStart = Color(genre.gradientStart),
+                        gradientEnd = Color(genre.gradientEnd),
+                        onClick = { actions.onGenreClick(genre) },
+                        height = GENRE_TILE_COMPACT_HEIGHT,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchTyping(query: String, suggestions: List<String>, actions: SearchActions) {
+    Column(Modifier.padding(top = FlixTheme.spacing.sm)) {
+        suggestions.forEach { suggestion ->
+            SuggestionRow(
+                text = suggestion,
+                leadingIcon = R.drawable.ic_history,
+                onClick = { actions.onSearchNow(suggestion) },
+                trailing = {
+                    IconButton(onClick = { actions.onQueryChange(suggestion) }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_north_west),
+                            contentDescription = stringResource(R.string.search_use_suggestion, suggestion),
+                            tint = FlixTheme.colors.textSecondary,
+                            modifier = Modifier.size(TRAILING_ICON_SIZE),
+                        )
+                    }
+                },
+            )
+        }
+        SuggestionRow(
+            text = stringResource(R.string.search_now, query.trim()),
+            leadingIcon = R.drawable.ic_search,
+            onClick = { actions.onSearchNow(query) },
+        )
+    }
+}
+
+@Composable
+private fun SearchEmpty(state: SearchUiState.Empty, actions: SearchActions) {
+    Column(Modifier.verticalScroll(rememberScrollState())) {
+        StateView(
+            icon = R.drawable.ic_search_off,
+            title = stringResource(R.string.search_empty_title, state.query),
+            body = stringResource(R.string.search_empty_body),
+        )
+        if (state.suggestions.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.search_did_you_mean).uppercase(),
+                style = FlixTheme.typography.overline,
+                color = FlixTheme.colors.textSecondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = FlixTheme.spacing.md),
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.sm, Alignment.CenterHorizontally),
+            ) {
+                state.suggestions.forEach { suggestion ->
+                    FlixChip(label = suggestion, onClick = { actions.onSearchNow(suggestion) })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchError(error: FlixError, recentSearches: List<String>, actions: SearchActions) {
+    Column(Modifier.verticalScroll(rememberScrollState())) {
+        ErrorStateView(
+            error = error,
+            onRetry = actions.onRetry,
+            upstreamTitle = R.string.search_error_upstream_title,
+            upstreamBody = R.string.search_error_upstream_body,
+        )
+        if (recentSearches.isNotEmpty()) {
+            SectionHeader(title = stringResource(R.string.search_recent))
+            recentSearches.forEach { recentSearch ->
+                SuggestionRow(
+                    text = recentSearch,
+                    leadingIcon = R.drawable.ic_history,
+                    onClick = { actions.onSearchNow(recentSearch) },
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun FilterChipsRow(
     selected: SearchFilter,
@@ -199,17 +351,15 @@ private fun FilterChipsRow(
     }
 }
 
-// CARGA (mockup sloading): chips al 50 %, tarjeta fantasma, título fantasma al 35 %
-// y 3 filas fantasma. Si ya había resultados, se quedan atenuados (nota del diseño).
 @Composable
 private fun SearchLoading(
     previous: SearchUiState.Results?,
     filter: SearchFilter,
-    callbacks: ResultCallbacks,
+    actions: SearchActions,
 ) {
     if (previous != null) {
-        Box(Modifier.alpha(0.5f)) {
-            SearchResults(results = previous, filter = filter, callbacks = callbacks)
+        Box(Modifier.alpha(DIMMED_ALPHA)) {
+            SearchResults(results = previous, filter = filter, actions = actions)
         }
         return
     }
@@ -218,14 +368,14 @@ private fun SearchLoading(
         FilterChipsRow(
             selected = SearchFilter.All,
             onFilterChange = {},
-            modifier = Modifier.alpha(0.5f),
+            modifier = Modifier.alpha(DIMMED_ALPHA),
         )
         BestResultCardSkeleton(Modifier.padding(top = FlixTheme.spacing.lg))
         SkeletonBox(
             Modifier
                 .padding(horizontal = FlixTheme.spacing.gutter)
                 .padding(top = FlixTheme.spacing.sectionGap, bottom = FlixTheme.spacing.md)
-                .fillMaxWidth(0.35f)
+                .fillMaxWidth(SECTION_TITLE_SKELETON_WIDTH)
                 .height(12.dp)
         )
         SKELETON_ROW_WIDTHS.forEach { (titleWidth, subtitleWidth) ->
@@ -234,27 +384,26 @@ private fun SearchLoading(
     }
 }
 
-// RESULTADOS (mockup searchres).
 @Composable
 private fun SearchResults(
     results: SearchUiState.Results,
     filter: SearchFilter,
-    callbacks: ResultCallbacks,
+    actions: SearchActions,
 ) {
     Column {
-        FilterChipsRow(selected = filter, onFilterChange = callbacks.onFilterChange)
+        FilterChipsRow(selected = filter, onFilterChange = actions.onFilterChange)
         LazyColumn(
             contentPadding = PaddingValues(top = FlixTheme.spacing.lg, bottom = FlixTheme.spacing.xxl),
         ) {
             when (filter) {
-                SearchFilter.All -> allResults(results, callbacks)
-                SearchFilter.Songs -> trackItems(results.tracks, callbacks.onTrackClick)
+                SearchFilter.All -> allResults(results, actions)
+                SearchFilter.Songs -> trackItems(results.tracks, actions.onTrackClick)
                 SearchFilter.Artists -> cardGrid(results.artists, key = { it.id }) { artist, cardModifier ->
                     MediaCard(
                         title = artist.name,
                         subtitle = stringResource(R.string.type_artist),
                         artworkUrl = artist.artworkUrl,
-                        onClick = { callbacks.onArtistClick(artist) },
+                        onClick = { actions.onArtistClick(artist) },
                         circular = true,
                         modifier = cardModifier,
                     )
@@ -264,7 +413,7 @@ private fun SearchResults(
                         title = album.name,
                         subtitle = album.artistName,
                         artworkUrl = album.artworkUrl,
-                        onClick = { callbacks.onAlbumClick(album) },
+                        onClick = { actions.onAlbumClick(album) },
                         modifier = cardModifier,
                     )
                 }
@@ -273,10 +422,8 @@ private fun SearchResults(
     }
 }
 
-// "Todo": mejor resultado → Canciones (Ver todo) → Artistas → Álbumes.
-// Las secciones vacías no se muestran (principio de diseño).
-private fun LazyListScope.allResults(results: SearchUiState.Results, callbacks: ResultCallbacks) {
-    val bestTrack = results.tracks.first() // seguro: Results nunca tiene la lista vacía
+private fun LazyListScope.allResults(results: SearchUiState.Results, actions: SearchActions) {
+    val bestTrack = results.tracks.first()
     item(key = "best") {
         BestResultCard(
             overline = stringResource(R.string.search_best_result),
@@ -284,8 +431,8 @@ private fun LazyListScope.allResults(results: SearchUiState.Results, callbacks: 
             subtitle = "${stringResource(R.string.type_song)} · ${bestTrack.artistNames}",
             artworkUrl = bestTrack.artworkUrl,
             playLabel = stringResource(R.string.play_item, bestTrack.title),
-            onClick = { callbacks.onTrackOpen(bestTrack) },
-            onPlay = { callbacks.onTrackClick(bestTrack) },
+            onClick = { actions.onTrackOpen(bestTrack) },
+            onPlay = { actions.onTrackClick(bestTrack) },
         )
     }
 
@@ -295,68 +442,38 @@ private fun LazyListScope.allResults(results: SearchUiState.Results, callbacks: 
             SectionHeader(
                 title = stringResource(R.string.search_section_songs),
                 actionLabel = stringResource(R.string.see_all),
-                onAction = { callbacks.onFilterChange(SearchFilter.Songs) },
+                onAction = { actions.onFilterChange(SearchFilter.Songs) },
                 modifier = Modifier.padding(top = FlixTheme.spacing.sectionGap),
             )
         }
-        trackItems(moreSongs, callbacks.onTrackClick)
+        trackItems(moreSongs, actions.onTrackClick)
     }
 
     if (results.artists.isNotEmpty()) {
         item(key = "artists-header") {
-            // Diseño: sec('Artistas') sin "Ver todo".
             SectionHeader(
                 title = stringResource(R.string.search_section_artists),
                 modifier = Modifier.padding(top = FlixTheme.spacing.sectionGap, bottom = FlixTheme.spacing.md),
             )
         }
         item(key = "artists") {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = FlixTheme.spacing.gutter),
-                horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.itemGap),
-            ) {
-                items(results.artists, key = { it.id }) { artist ->
-                    MediaCard(
-                        title = artist.name,
-                        subtitle = stringResource(R.string.type_artist),
-                        artworkUrl = artist.artworkUrl,
-                        onClick = { callbacks.onArtistClick(artist) },
-                        circular = true,
-                        modifier = Modifier.width(ARTIST_CARD_WIDTH),
-                    )
-                }
-            }
+            ArtistCarousel(artists = results.artists, onArtistClick = actions.onArtistClick)
         }
     }
 
     if (results.albums.isNotEmpty()) {
         item(key = "albums-header") {
-            // Diseño: sec('Álbumes') sin "Ver todo".
             SectionHeader(
                 title = stringResource(R.string.search_section_albums),
                 modifier = Modifier.padding(top = FlixTheme.spacing.sectionGap, bottom = FlixTheme.spacing.md),
             )
         }
         item(key = "albums") {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = FlixTheme.spacing.gutter),
-                horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.itemGap),
-            ) {
-                items(results.albums, key = { it.id }) { album ->
-                    MediaCard(
-                        title = album.name,
-                        subtitle = album.artistName,
-                        artworkUrl = album.artworkUrl,
-                        onClick = { callbacks.onAlbumClick(album) },
-                        modifier = Modifier.width(ALBUM_CARD_WIDTH),
-                    )
-                }
-            }
+            AlbumCarousel(albums = results.albums, onAlbumClick = actions.onAlbumClick)
         }
     }
 }
 
-// Filas de canción con subtítulo "artista · álbum" (row(..., {album:1}) del diseño).
 private fun LazyListScope.trackItems(tracks: List<Track>, onTrackClick: (Track) -> Unit) {
     items(tracks, key = { it.id }) { track ->
         TrackRow(
@@ -371,8 +488,7 @@ private fun LazyListScope.trackItems(tracks: List<Track>, onTrackClick: (Track) 
     }
 }
 
-// Cuadrícula de 2 columnas DENTRO de una LazyColumn (no se puede anidar una
-// LazyVerticalGrid): se agrupan los elementos de 2 en 2 y cada par es una fila.
+/** Two-column grid inside a LazyColumn, built from rows of two cards. */
 private fun <Item> LazyListScope.cardGrid(
     gridItems: List<Item>,
     key: (Item) -> String,
@@ -387,12 +503,16 @@ private fun <Item> LazyListScope.cardGrid(
             horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.itemGap),
         ) {
             pair.forEach { gridItem -> card(gridItem, Modifier.weight(1f)) }
-            if (pair.size == 1) Spacer(Modifier.weight(1f)) // par incompleto: media anchura
+            if (pair.size == 1) Spacer(Modifier.weight(1f))
         }
     }
 }
 
-// ─── Previews: sin ViewModel ni servidor ───
+private const val SONGS_PREVIEW_COUNT = 3
+private const val DIMMED_ALPHA = 0.5f
+private const val SECTION_TITLE_SKELETON_WIDTH = 0.35f
+private val SKELETON_ROW_WIDTHS = listOf(0.7f to 0.45f, 0.6f to 0.4f, 0.75f to 0.35f)
+private val TRAILING_ICON_SIZE = 20.dp
 
 private val previewTracks = listOf(
     Track("1", "Fade To Black", listOf(ArtistRef("m", "Metallica")), AlbumRef("rtl", "Ride the Lightning"), 417.seconds, null),
@@ -406,27 +526,50 @@ private val previewResults = SearchUiState.Results(
     albums = previewTracks.distinctAlbums(),
 )
 
+private val previewRecents = listOf("fade to black", "eminem killshot", "bad bunny")
+
 @Composable
-private fun SearchPreviewContent(uiState: SearchUiState, filter: SearchFilter = SearchFilter.All) {
+private fun SearchPreviewContent(
+    uiState: SearchUiState,
+    query: String = "fade to black",
+    filter: SearchFilter = SearchFilter.All,
+) {
     SearchContent(
-        query = "fade to black",
+        query = query,
         uiState = uiState,
         filter = filter,
-        onQueryChange = {}, onClear = {}, onRetry = {}, onFilterChange = {},
-        onTrackClick = {}, onTrackOpen = {}, onArtistClick = {}, onAlbumClick = {},
+        recentSearches = previewRecents,
+        actions = SearchActions(),
     )
+}
+
+@Preview(name = "Reposo", widthDp = 360, heightDp = 900)
+@Composable
+private fun SearchIdlePreview() {
+    FlixPreview { SearchPreviewContent(SearchUiState.Idle, query = "") }
+}
+
+@Preview(name = "Reposo · claro", widthDp = 360, heightDp = 900)
+@Composable
+private fun SearchIdleLightPreview() {
+    FlixPreview(ThemeMode.Light) { SearchPreviewContent(SearchUiState.Idle, query = "") }
+}
+
+@Preview(name = "Escribiendo", widthDp = 360, heightDp = 640)
+@Composable
+private fun SearchTypingPreview() {
+    FlixPreview {
+        SearchPreviewContent(
+            SearchUiState.Typing(listOf("fade to black", "fade to black metallica")),
+            query = "fade to b",
+        )
+    }
 }
 
 @Preview(name = "Resultados · Todo", widthDp = 360, heightDp = 900)
 @Composable
 private fun SearchResultsPreview() {
     FlixPreview { SearchPreviewContent(previewResults) }
-}
-
-@Preview(name = "Resultados · Todo · claro", widthDp = 360, heightDp = 900)
-@Composable
-private fun SearchResultsLightPreview() {
-    FlixPreview(ThemeMode.Light) { SearchPreviewContent(previewResults) }
 }
 
 @Preview(name = "Resultados · Artistas", widthDp = 360, heightDp = 640)
@@ -441,8 +584,19 @@ private fun SearchLoadingPreview() {
     FlixPreview { SearchPreviewContent(SearchUiState.Loading()) }
 }
 
+@Preview(name = "Sin resultados", widthDp = 360, heightDp = 640)
+@Composable
+private fun SearchEmptyPreview() {
+    FlixPreview {
+        SearchPreviewContent(
+            SearchUiState.Empty("fdae to blak", suggestions = listOf("fade to black")),
+            query = "fdae to blak",
+        )
+    }
+}
+
 @Preview(name = "Error", widthDp = 360, heightDp = 640)
 @Composable
 private fun SearchErrorPreview() {
-    FlixPreview { SearchPreviewContent(SearchUiState.Error(FlixError.ServerUnreachable)) }
+    FlixPreview { SearchPreviewContent(SearchUiState.Error(FlixError.NoConnection)) }
 }

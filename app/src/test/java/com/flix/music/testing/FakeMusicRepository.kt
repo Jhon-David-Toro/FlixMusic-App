@@ -6,18 +6,24 @@ import com.flix.music.core.model.FlixException
 import com.flix.music.core.model.Track
 import kotlinx.coroutines.delay
 
+/** In-memory [MusicRepository] whose answer, failure and latency are set by each test. */
 class FakeMusicRepository : MusicRepository {
 
     var tracks: List<Track> = emptyList()
     var error: FlixError? = null
+
+    /** Simulated server latency, on the test's virtual clock. */
+    var responseDelayMillis = 0L
+
     var searchCount = 0
         private set
 
-    // Simula un servidor lento (en el reloj virtual del test).
-    var responseDelayMillis = 0L
+    var lastQuery: String? = null
+        private set
 
     override suspend fun search(query: String): List<Track> {
         searchCount++
+        lastQuery = query
         delay(responseDelayMillis)
         error?.let { throw FlixException(it) }
         return tracks

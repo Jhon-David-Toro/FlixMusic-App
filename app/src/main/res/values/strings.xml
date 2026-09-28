@@ -5,11 +5,18 @@
     <string name="tab_library">Biblioteca</string>
 
     <string name="loading_results">Cargando resultados</string>
+    <string name="action_back">Volver</string>
 
     <string name="search_placeholder">Canciones, artistas o álbumes</string>
     <string name="search_clear">Borrar búsqueda</string>
-    <string name="search_idle_title">Encuentra tu música</string>
-    <string name="search_idle_body">Escribe el nombre de una canción, un artista o un álbum.</string>
+    <string name="search_recent">Recientes</string>
+    <string name="search_clear_recents">Borrar</string>
+    <string name="search_remove_recent">Quitar “%1$s” de recientes</string>
+    <string name="search_use_suggestion">Usar “%1$s”</string>
+    <string name="search_now">Buscar “%1$s”</string>
+    <string name="search_moods">Según tu ánimo</string>
+    <string name="search_genres">Géneros</string>
+    <string name="search_did_you_mean">¿Quizás buscabas?</string>
     <string name="search_empty_title">No encontramos resultados para “%1$s”</string>
     <string name="search_empty_body">Revisa la ortografía o prueba solo con el nombre del artista o del álbum.</string>
     <string name="search_filter_all">Todo</string>
@@ -21,6 +28,20 @@
     <string name="type_song">Canción</string>
     <string name="type_artist">Artista</string>
     <string name="play_item">Reproducir %1$s</string>
+
+    <string name="mood_energy">Energía</string>
+    <string name="mood_night">De noche</string>
+    <string name="mood_focus">Concentración</string>
+    <string name="mood_workout">Entrenar</string>
+
+    <string name="genre_overline">Género</string>
+    <string name="genre_play">Reproducir</string>
+    <string name="genre_shuffle">Aleatorio</string>
+    <string name="genre_popular_songs">Canciones populares</string>
+    <string name="genre_artists">Artistas</string>
+    <string name="genre_albums">Álbumes</string>
+    <string name="genre_empty_title">Aún no hay canciones de %1$s</string>
+    <string name="genre_empty_body">No encontramos canciones para este género ahora mismo. Vuelve a intentarlo más tarde.</string>
 
     <string name="action_retry">Reintentar</string>
     <string name="error_no_connection_title">Sin conexión</string>
