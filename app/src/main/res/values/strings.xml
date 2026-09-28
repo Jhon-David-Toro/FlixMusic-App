@@ -4,6 +4,8 @@
     <string name="tab_search">Buscar</string>
     <string name="tab_library">Biblioteca</string>
 
+    <string name="loading_results">Cargando resultados</string>
+
     <string name="search_placeholder">Canciones, artistas o álbumes</string>
     <string name="search_clear">Borrar búsqueda</string>
     <string name="search_idle_title">Encuentra tu música</string>
