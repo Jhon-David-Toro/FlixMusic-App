@@ -57,7 +57,6 @@ import com.flix.music.core.designsystem.component.StateView
 import com.flix.music.core.designsystem.component.SuggestionRow
 import com.flix.music.core.designsystem.component.TrackRow
 import com.flix.music.core.designsystem.component.TrackRowSkeleton
-import com.flix.music.core.designsystem.component.util.toClock
 import com.flix.music.core.designsystem.theme.FlixPreview
 import com.flix.music.core.designsystem.theme.FlixTheme
 import com.flix.music.core.designsystem.theme.ThemeMode
@@ -71,6 +70,8 @@ import com.flix.music.core.model.Genres
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.model.distinctArtists
+import com.flix.music.core.ui.LocalTrackMenu
+import com.flix.music.core.ui.open
 import kotlin.time.Duration.Companion.seconds
 
 /** Every user action on the Search screen. Defaults do nothing, which keeps previews short. */
@@ -492,16 +493,17 @@ private fun LazyListScope.trackItems(
     onTrackClick: (Track) -> Unit,
 ) {
     items(tracks, key = { it.id }) { track ->
+        val trackMenu = LocalTrackMenu.current
         TrackRow(
             title = track.title,
             subtitle = listOfNotNull(track.artistNames, track.album?.name)
                 .filter { it.isNotBlank() }
                 .joinToString(" · "),
             artworkUrl = track.artworkUrl,
-            duration = track.duration?.toClock(),
             onClick = { onTrackClick(track) },
             isCurrent = track.id == nowPlaying.trackId,
             isPlaying = nowPlaying.isPlaying,
+            onMoreClick = { trackMenu.open(track) },
         )
     }
 }

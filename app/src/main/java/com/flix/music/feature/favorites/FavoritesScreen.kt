@@ -46,9 +46,11 @@ import com.flix.music.core.model.FavoriteTrack
 import com.flix.music.core.model.SortOrder
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.totalDuration
-import kotlinx.coroutines.launch
+import com.flix.music.core.ui.LocalTrackMenu
+import com.flix.music.core.ui.open
 import java.time.Instant
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.launch
 
 /** Every user action on the Favorites screen. Defaults do nothing, which keeps previews short. */
 data class FavoritesActions(
@@ -155,11 +157,13 @@ fun FavoritesContent(
                 }
             }
             items(content.visible, key = { it.track.id }) { favorite ->
+                val trackMenu = LocalTrackMenu.current
                 TrackRow(
                     title = favorite.track.title,
                     subtitle = favorite.track.artistNames,
                     artworkUrl = favorite.track.artworkUrl,
                     onClick = { actions.onTrackClick(favorite.track) },
+                    onLongClick = { trackMenu.open(favorite.track) },
                     isCurrent = favorite.track.id == nowPlaying.trackId,
                     isPlaying = nowPlaying.isPlaying,
                     duration = favorite.track.duration?.toClock(),

@@ -16,6 +16,9 @@ import com.flix.music.feature.favorites.navigation.navigateToFavorites
 import com.flix.music.feature.history.navigation.historyScreen
 import com.flix.music.feature.history.navigation.navigateToHistory
 import com.flix.music.feature.library.navigation.libraryGraph
+import com.flix.music.feature.playlist.navigation.navigateToPlaylist
+import com.flix.music.feature.playlist.navigation.navigateToPlaylistEdit
+import com.flix.music.feature.playlist.navigation.playlistScreens
 import com.flix.music.feature.search.navigation.searchGraph
 
 @Composable
@@ -42,12 +45,24 @@ fun FlixNavHost(
         libraryGraph(
             onOpenFavorites = navController::navigateToFavorites,
             onOpenHistory = navController::navigateToHistory,
+            onOpenPlaylist = navController::navigateToPlaylist,
             onBrowseMusic = browseMusic,
         ) {
             favoritesScreen(onBack = navController::popBackStack, onBrowseMusic = browseMusic)
             historyScreen(onBack = navController::popBackStack, onBrowseMusic = browseMusic)
+            playlistScreens(
+                onBack = navController::popBackStack,
+                onEdit = navController::navigateToPlaylistEdit,
+                onBrowseMusic = browseMusic,
+            )
         }
     }
+}
+
+/** Opens a playlist inside the Library tab, e.g. from "Ver" on the "Añadida a …" snackbar. */
+fun NavController.openPlaylistInLibrary(playlistId: Long) {
+    navigateToTopLevel(TopLevelDestination.Library)
+    navigateToPlaylist(playlistId)
 }
 
 /**

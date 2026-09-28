@@ -13,10 +13,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,9 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -42,6 +37,7 @@ import com.flix.music.core.designsystem.component.FlixTopAppBar
 import com.flix.music.core.designsystem.component.LocalSnackbarHostState
 import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.designsystem.component.StateView
+import com.flix.music.core.designsystem.component.SwipeToRemove
 import com.flix.music.core.designsystem.component.TrackRow
 import com.flix.music.core.designsystem.component.showUndo
 import com.flix.music.core.designsystem.theme.FlixPreview
@@ -51,13 +47,14 @@ import com.flix.music.core.model.HistoryDay
 import com.flix.music.core.model.HistoryDayLabel
 import com.flix.music.core.model.HistoryEntry
 import com.flix.music.core.model.Track
-import kotlinx.coroutines.launch
+import com.flix.music.core.ui.LocalTrackMenu
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 /** Every user action on the History screen. Defaults do nothing, which keeps previews short. */
 data class HistoryActions(
@@ -166,6 +163,7 @@ fun HistoryContent(
                 days.forEach { day ->
                     stickyHeader(key = "day-${day.entries.first().id}") { DayHeader(day.label) }
                     items(day.entries, key = { it.id }) { entry ->
+                        val trackMenu = LocalTrackMenu.current
                         SwipeToRemove(
                             onRemove = { removeWithUndo(entry) },
                             modifier = Modifier.animateItem(),
@@ -175,6 +173,7 @@ fun HistoryContent(
                                 subtitle = entry.track.artistNames,
                                 artworkUrl = entry.track.artworkUrl,
                                 onClick = { actions.onEntryClick(entry) },
+                                onLongClick = { trackMenu.open(entry.track) { removeWithUndo(entry) } },
                                 isCurrent = entry.track.id == nowPlaying.trackId,
                                 isPlaying = nowPlaying.isPlaying,
                                 modifier = Modifier
@@ -243,40 +242,6 @@ private fun DayHeader(label: HistoryDayLabel) {
  * Swipe end-to-start to remove (design Gestures): red error background with a delete
  * icon. TalkBack users get the same action through the row's custom actions.
  */
-@Composable
-private fun SwipeToRemove(
-    onRemove: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    val dismissState = rememberSwipeToDismissBoxState()
-    SwipeToDismissBox(
-        state = dismissState,
-        modifier = modifier,
-        enableDismissFromStartToEnd = false,
-        onDismiss = { dismissValue ->
-            if (dismissValue == SwipeToDismissBoxValue.EndToStart) onRemove()
-        },
-        backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(FlixTheme.colors.error)
-                    .padding(horizontal = FlixTheme.spacing.xxl),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_delete),
-                    contentDescription = null,
-                    tint = Color.White,
-                )
-            }
-        },
-    ) {
-        content()
-    }
-}
-
 private fun Instant.formatTime(): String =
     atZone(ZoneId.systemDefault()).toLocalTime().format(TIME_FORMATTER)
 

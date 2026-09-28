@@ -1,7 +1,8 @@
 package com.flix.music.core.designsystem.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,12 +10,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -30,7 +36,11 @@ import com.flix.music.core.designsystem.theme.FlixTheme
  * while [isPlaying]. The state is also announced to screen readers.
  * [trailing] replaces the duration/equalizer slot (e.g. the ♥ in Favoritos or the
  * time in Historial).
+ * [onMoreClick] adds the design's default ⋯ button (the duration is then left out, as
+ * in the mockups) and long press opens the same menu; [onLongClick] only adds the long
+ * press, for rows whose right slot is taken.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TrackRow(
     title: String,
@@ -42,7 +52,11 @@ fun TrackRow(
     isCurrent: Boolean = false,
     isPlaying: Boolean = false,
     trailing: (@Composable () -> Unit)? = null,
+    onMoreClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
 ) {
+    val haptics = LocalHapticFeedback.current
+    val openMenu = onMoreClick ?: onLongClick
     val playbackStateLabel = when {
         !isCurrent -> null
         isPlaying -> stringResource(R.string.now_playing)
@@ -52,9 +66,20 @@ fun TrackRow(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = FlixTheme.spacing.rowHeight)
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = openMenu?.let { menu ->
+                    {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        menu()
+                    }
+                },
+            )
             .semantics { if (playbackStateLabel != null) stateDescription = playbackStateLabel }
-            .padding(horizontal = FlixTheme.spacing.gutter),
+            .padding(
+                start = FlixTheme.spacing.gutter,
+                end = if (onMoreClick != null) FlixTheme.spacing.md else FlixTheme.spacing.gutter,
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.itemGap),
     ) {
@@ -86,11 +111,20 @@ fun TrackRow(
         when {
             trailing != null -> trailing()
             isCurrent -> NowPlayingEqualizer(animated = isPlaying)
-            duration != null -> Text(
+            onMoreClick == null && duration != null -> Text(
                 text = duration,
                 style = FlixTheme.typography.caption,
                 color = FlixTheme.colors.textTertiary,
             )
+        }
+        if (onMoreClick != null) {
+            IconButton(onClick = onMoreClick) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_more_vert),
+                    contentDescription = stringResource(R.string.track_more_options, title),
+                    tint = FlixTheme.colors.textSecondary,
+                )
+            }
         }
     }
 }

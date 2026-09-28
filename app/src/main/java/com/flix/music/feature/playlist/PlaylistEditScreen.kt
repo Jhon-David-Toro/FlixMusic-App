@@ -1,0 +1,495 @@
+package com.flix.music.feature.playlist
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.compose.AsyncImage
+import com.flix.music.R
+import com.flix.music.core.designsystem.component.ConfirmDialog
+import com.flix.music.core.designsystem.component.FlixPrimaryButton
+import com.flix.music.core.designsystem.component.FlixTextField
+import com.flix.music.core.designsystem.component.LocalSnackbarHostState
+import com.flix.music.core.designsystem.component.PlaylistArtwork
+import com.flix.music.core.designsystem.component.SwipeToRemove
+import com.flix.music.core.designsystem.component.showUndo
+import com.flix.music.core.designsystem.theme.FlixPreview
+import com.flix.music.core.designsystem.theme.FlixTheme
+import com.flix.music.core.model.ArtistRef
+import com.flix.music.core.model.Playlist
+import com.flix.music.core.model.Track
+import kotlinx.coroutines.launch
+
+/** Every user action on the Edit playlist screen. Defaults do nothing, which keeps previews short. */
+data class PlaylistEditActions(
+    val onClose: () -> Unit = {},
+    val onSave: () -> Unit = {},
+    val onNameChange: (String) -> Unit = {},
+    val onDescriptionChange: (String) -> Unit = {},
+    val onRemove: (Track) -> Int = { -1 },
+    val onUndoRemove: (Track, Int) -> Unit = { _, _ -> },
+    val onMove: (fromIndex: Int, toIndex: Int) -> Unit = { _, _ -> },
+    val onDelete: () -> Unit = {},
+)
+
+/** What the form shows: the draft plus whether it can be saved or would be lost. */
+data class PlaylistEditForm(
+    val name: String,
+    val description: String,
+    val tracks: List<Track>,
+    val canSave: Boolean,
+    val hasChanges: Boolean,
+)
+
+@Composable
+fun PlaylistEditScreen(
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: PlaylistEditViewModel = hiltViewModel(),
+) {
+    LaunchedEffect(viewModel.isFinished) {
+        if (viewModel.isFinished) onClose()
+    }
+    if (!viewModel.isLoaded) return
+
+    val actions = remember(viewModel, onClose) {
+        PlaylistEditActions(
+            onClose = onClose,
+            onSave = viewModel::onSave,
+            onNameChange = viewModel::onNameChange,
+            onDescriptionChange = viewModel::onDescriptionChange,
+            onRemove = viewModel::onRemove,
+            onUndoRemove = viewModel::onUndoRemove,
+            onMove = viewModel::onMove,
+            onDelete = viewModel::onDelete,
+        )
+    }
+    PlaylistEditContent(
+        form = PlaylistEditForm(
+            name = viewModel.name,
+            description = viewModel.description,
+            tracks = viewModel.tracks,
+            canSave = viewModel.canSave,
+            hasChanges = viewModel.hasChanges,
+        ),
+        actions = actions,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun PlaylistEditContent(
+    form: PlaylistEditForm,
+    actions: PlaylistEditActions,
+    modifier: Modifier = Modifier,
+) {
+    var confirmingDiscard by rememberSaveable { mutableStateOf(false) }
+    var confirmingDelete by rememberSaveable { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+    val reorder = remember(listState) { ReorderState(listState) }
+    val snackbarHostState = LocalSnackbarHostState.current
+    val coroutineScope = rememberCoroutineScope()
+    val removedMessage = stringResource(R.string.playlist_track_removed)
+    val undoLabel = stringResource(R.string.action_undo)
+    val requestClose = { if (form.hasChanges) confirmingDiscard = true else actions.onClose() }
+
+    fun removeWithUndo(track: Track) {
+        val index = actions.onRemove(track)
+        if (index < 0) return
+        coroutineScope.launch {
+            snackbarHostState.showUndo(removedMessage, undoLabel) { actions.onUndoRemove(track, index) }
+        }
+    }
+
+    BackHandler(enabled = form.hasChanges) { confirmingDiscard = true }
+
+    Column(modifier.fillMaxSize()) {
+        EditTopBar(canSave = form.canSave, onClose = requestClose, onSave = actions.onSave)
+        LazyColumn(state = listState, contentPadding = PaddingValues(bottom = FlixTheme.spacing.xxl)) {
+            item(key = "form") { EditForm(form, actions) }
+            item(key = "count") {
+                Text(
+                    text = pluralStringResource(R.plurals.songs_count, form.tracks.size, form.tracks.size).uppercase(),
+                    style = FlixTheme.typography.overline,
+                    color = FlixTheme.colors.textSecondary,
+                    modifier = Modifier
+                        .padding(horizontal = FlixTheme.spacing.gutter)
+                        .padding(top = FlixTheme.spacing.xxl, bottom = FlixTheme.spacing.sm),
+                )
+            }
+            itemsIndexed(form.tracks, key = { _, track -> track.id }) { index, track ->
+                val isDragged = reorder.draggedKey == track.id
+                SwipeToRemove(
+                    onRemove = { removeWithUndo(track) },
+                    modifier = if (isDragged) {
+                        Modifier
+                            .zIndex(1f)
+                            .graphicsLayer {
+                                translationY = reorder.dragOffset
+                                scaleX = DRAGGED_SCALE
+                                scaleY = DRAGGED_SCALE
+                            }
+                    } else {
+                        Modifier.animateItem()
+                    },
+                ) {
+                    EditTrackRow(
+                        track = track,
+                        index = index,
+                        lastIndex = form.tracks.lastIndex,
+                        isDragged = isDragged,
+                        onRemove = { removeWithUndo(track) },
+                        onMove = actions.onMove,
+                        reorder = reorder,
+                        tracks = form.tracks,
+                    )
+                }
+            }
+            item(key = "delete") {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 18.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    TextButton(onClick = { confirmingDelete = true }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_delete),
+                            contentDescription = null,
+                            tint = FlixTheme.colors.error,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Text(
+                            text = stringResource(R.string.playlist_delete),
+                            style = FlixTheme.typography.label,
+                            color = FlixTheme.colors.error,
+                            modifier = Modifier.padding(start = 6.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (confirmingDiscard) {
+        ConfirmDialog(
+            title = stringResource(R.string.playlist_discard_title),
+            message = stringResource(R.string.playlist_discard_message),
+            confirmLabel = stringResource(R.string.playlist_discard_confirm),
+            dismissLabel = stringResource(R.string.playlist_keep_editing),
+            destructive = true,
+            onConfirm = {
+                confirmingDiscard = false
+                actions.onClose()
+            },
+            onDismiss = { confirmingDiscard = false },
+        )
+    }
+    if (confirmingDelete) {
+        ConfirmDialog(
+            title = stringResource(R.string.playlist_delete_title, form.name),
+            message = stringResource(R.string.playlist_delete_message),
+            confirmLabel = stringResource(R.string.playlist_delete_confirm),
+            dismissLabel = stringResource(R.string.action_cancel),
+            destructive = true,
+            onConfirm = {
+                confirmingDelete = false
+                actions.onDelete()
+            },
+            onDismiss = { confirmingDelete = false },
+        )
+    }
+}
+
+/** `close` · "Editar playlist" · small "Guardar" button. */
+@Composable
+private fun EditTopBar(canSave: Boolean, onClose: () -> Unit, onSave: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(start = FlixTheme.spacing.xs, end = FlixTheme.spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onClose) {
+            Icon(
+                painter = painterResource(R.drawable.ic_close),
+                contentDescription = stringResource(R.string.action_close),
+                tint = FlixTheme.colors.textPrimary,
+            )
+        }
+        Text(
+            text = stringResource(R.string.playlist_edit),
+            style = FlixTheme.typography.title,
+            color = FlixTheme.colors.textPrimary,
+            modifier = Modifier
+                .weight(1f)
+                .semantics { heading() },
+        )
+        FlixPrimaryButton(
+            text = stringResource(R.string.action_save),
+            onClick = onSave,
+            enabled = canSave,
+            compact = true,
+        )
+    }
+}
+
+@Composable
+private fun EditForm(form: PlaylistEditForm, actions: PlaylistEditActions) {
+    Column(Modifier.padding(horizontal = FlixTheme.spacing.gutter)) {
+        PlaylistArtwork(
+            coverUrls = form.tracks.mapNotNull { track -> track.artworkUrl }.distinct().let { urls ->
+                if (urls.size >= 4) urls.take(4) else urls.take(1)
+            },
+            size = 84.dp,
+            cornerRadius = 10.dp,
+            stacked = false,
+            modifier = Modifier.padding(top = 6.dp, bottom = 14.dp),
+        )
+        FlixTextField(
+            value = form.name,
+            onValueChange = actions.onNameChange,
+            label = stringResource(R.string.playlist_field_name),
+            helper = stringResource(R.string.playlist_name_counter, form.name.length, Playlist.MAX_NAME_LENGTH),
+            maxLength = Playlist.MAX_NAME_LENGTH,
+        )
+        FlixTextField(
+            value = form.description,
+            onValueChange = actions.onDescriptionChange,
+            label = stringResource(R.string.playlist_field_description),
+            placeholder = stringResource(R.string.playlist_description_placeholder),
+            singleLine = false,
+            modifier = Modifier.padding(top = FlixTheme.spacing.md),
+        )
+    }
+}
+
+/**
+ * Song row in edit mode: ⊖ removes it, the handle reorders it by dragging. Screen
+ * readers get "Mover arriba / abajo" and "Quitar" instead of the gestures.
+ */
+@Composable
+private fun EditTrackRow(
+    track: Track,
+    index: Int,
+    lastIndex: Int,
+    isDragged: Boolean,
+    onRemove: () -> Unit,
+    onMove: (Int, Int) -> Unit,
+    reorder: ReorderState,
+    tracks: List<Track>,
+) {
+    val haptics = LocalHapticFeedback.current
+    val currentTracks by rememberUpdatedState(tracks)
+    val currentOnMove by rememberUpdatedState(onMove)
+    val moveUpLabel = stringResource(R.string.action_move_up)
+    val moveDownLabel = stringResource(R.string.action_move_down)
+    val removeLabel = stringResource(R.string.playlist_remove_track)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = FlixTheme.spacing.rowHeight)
+            .then(if (isDragged) Modifier.shadow(6.dp, FlixTheme.shapes.md) else Modifier)
+            .background(if (isDragged) FlixTheme.colors.surfaceElevated else FlixTheme.colors.background)
+            .semantics(mergeDescendants = true) {
+                customActions = buildList {
+                    if (index > 0) add(CustomAccessibilityAction(moveUpLabel) { onMove(index, index - 1); true })
+                    if (index < lastIndex) add(CustomAccessibilityAction(moveDownLabel) { onMove(index, index + 1); true })
+                    add(CustomAccessibilityAction(removeLabel) { onRemove(); true })
+                }
+            }
+            .padding(start = FlixTheme.spacing.xs, end = FlixTheme.spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onRemove) {
+            Icon(
+                painter = painterResource(R.drawable.ic_do_not_disturb_on_filled),
+                contentDescription = stringResource(R.string.playlist_remove_track_named, track.title),
+                tint = FlixTheme.colors.error,
+            )
+        }
+        AsyncImage(
+            model = track.artworkUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(FlixTheme.shapes.xs)
+                .background(FlixTheme.colors.surfaceVariant),
+        )
+        Column(
+            Modifier
+                .weight(1f)
+                .padding(start = FlixTheme.spacing.itemGap),
+        ) {
+            Text(
+                text = track.title,
+                style = FlixTheme.typography.subtitle,
+                color = FlixTheme.colors.textPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = track.artistNames,
+                style = FlixTheme.typography.bodySmall,
+                color = FlixTheme.colors.textSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .size(FlixTheme.spacing.touchMin)
+                .clearAndSetSemantics { contentDescription = "" }
+                .pointerInput(track.id) {
+                    detectDragGestures(
+                        onDragStart = {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            reorder.start(track.id)
+                        },
+                        onDragEnd = reorder::stop,
+                        onDragCancel = reorder::stop,
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            val moved = reorder.drag(dragAmount.y) { fromKey, toKey ->
+                                val fromIndex = currentTracks.indexOfFirst { it.id == fromKey }
+                                val toIndex = currentTracks.indexOfFirst { it.id == toKey }
+                                currentOnMove(fromIndex, toIndex)
+                            }
+                            if (moved) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                        },
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_drag_indicator),
+                contentDescription = null,
+                tint = if (isDragged) FlixTheme.colors.textPrimary else FlixTheme.colors.textSecondary,
+            )
+        }
+    }
+}
+
+/**
+ * Drag-to-reorder for a [LazyColumn] whose song items are keyed by track id. The
+ * dragged row follows the finger through [dragOffset]; when its center crosses
+ * another song row both swap, and the offset is corrected so the row stays under
+ * the finger.
+ */
+private class ReorderState(private val listState: LazyListState) {
+
+    var draggedKey: String? by mutableStateOf(null)
+        private set
+
+    var dragOffset: Float by mutableFloatStateOf(0f)
+        private set
+
+    fun start(key: String) {
+        draggedKey = key
+        dragOffset = 0f
+    }
+
+    fun stop() {
+        draggedKey = null
+        dragOffset = 0f
+    }
+
+    /** Returns true when the drag crossed into another row and [onSwap] was called. */
+    fun drag(deltaY: Float, onSwap: (fromKey: String, toKey: String) -> Unit): Boolean {
+        val key = draggedKey ?: return false
+        dragOffset += deltaY
+        val visibleItems = listState.layoutInfo.visibleItemsInfo
+        val dragged = visibleItems.firstOrNull { item -> item.key == key } ?: return false
+        val draggedCenter = dragged.offset + dragOffset + dragged.size / 2f
+        val target = visibleItems.firstOrNull { item ->
+            item.key != key &&
+                item.key is String &&
+                item.key !in NON_TRACK_KEYS &&
+                draggedCenter.toInt() in item.offset until item.offset + item.size
+        } ?: return false
+        onSwap(key, target.key as String)
+        dragOffset += dragged.offset - target.offset
+        return true
+    }
+
+    private companion object {
+        val NON_TRACK_KEYS = setOf("form", "count", "delete")
+    }
+}
+
+private const val DRAGGED_SCALE = 1.02f
+
+private val previewTracks = listOf(
+    Track("1", "Midnight City", listOf(ArtistRef(null, "M83")), null, null, null),
+    Track("2", "Killshot", listOf(ArtistRef(null, "Eminem")), null, null, null),
+    Track("3", "Tití Me Preguntó", listOf(ArtistRef(null, "Bad Bunny")), null, null, null),
+)
+
+@Preview(name = "Editar playlist", widthDp = 360, heightDp = 760)
+@Composable
+private fun PlaylistEditPreview() {
+    FlixPreview {
+        PlaylistEditContent(
+            form = PlaylistEditForm(
+                name = "Noches de ruta",
+                description = "Para conducir cuando ya no hay tráfico.",
+                tracks = previewTracks,
+                canSave = true,
+                hasChanges = false,
+            ),
+            actions = PlaylistEditActions(),
+        )
+    }
+}

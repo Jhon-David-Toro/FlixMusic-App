@@ -4,11 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flix.music.core.data.repository.FavoritesRepository
 import com.flix.music.core.data.repository.HistoryRepository
+import com.flix.music.core.data.repository.PlaylistsRepository
 import com.flix.music.core.model.FavoriteTrack
+import com.flix.music.core.model.Playlist
 import com.flix.music.core.model.SortOrder
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.countPlayedOn
 import com.flix.music.core.model.sortedFor
+import com.flix.music.core.model.sortedPlaylistsFor
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerState
@@ -18,6 +21,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
@@ -32,21 +36,23 @@ data class LibraryUiState(
     val favoriteCount: Int = 0,
     val playedTodayCount: Int = 0,
     val hasHistory: Boolean = false,
-    val filter: LibraryFilter = LibraryFilter.Songs,
+    val filter: LibraryFilter = LibraryFilter.Playlists,
     val sortOrder: SortOrder = SortOrder.Recent,
+    val playlists: List<Playlist> = emptyList(),
     val songs: List<FavoriteTrack> = emptyList(),
 )
 
-/** Library tab: pinned Favorites and History, filter chips and the saved songs (favorites). */
+/** Library tab: pinned Favorites and History, filter chips, playlists and the saved songs (favorites). */
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     favoritesRepository: FavoritesRepository,
     historyRepository: HistoryRepository,
+    private val playlistsRepository: PlaylistsRepository,
     private val playerController: PlayerController,
     private val clock: Clock,
 ) : ViewModel() {
 
-    private val filter = MutableStateFlow(LibraryFilter.Songs)
+    private val filter = MutableStateFlow(LibraryFilter.Playlists)
     private val sortOrder = MutableStateFlow(SortOrder.Recent)
 
     val playerState: StateFlow<PlayerState> = playerController.state
@@ -54,15 +60,17 @@ class LibraryViewModel @Inject constructor(
     val uiState: StateFlow<LibraryUiState> = combine(
         favoritesRepository.favorites,
         historyRepository.history,
+        playlistsRepository.playlists,
         filter,
         sortOrder,
-    ) { favorites, history, selectedFilter, order ->
+    ) { favorites, history, playlists, selectedFilter, order ->
         LibraryUiState(
             favoriteCount = favorites.size,
             playedTodayCount = history.countPlayedOn(LocalDate.now(clock), clock.zone),
             hasHistory = history.isNotEmpty(),
             filter = selectedFilter,
             sortOrder = order,
+            playlists = playlists.sortedPlaylistsFor(order),
             songs = favorites.sortedFor(order),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), LibraryUiState())
@@ -80,6 +88,10 @@ class LibraryViewModel @Inject constructor(
         val songs = uiState.value.songs.map { it.track }
         val startIndex = songs.indexOfFirst { it.id == track.id }
         if (startIndex >= 0) playerController.play(songs, startIndex, PlaybackSource.Favorites)
+    }
+
+    fun onCreatePlaylist(name: String, description: String) {
+        viewModelScope.launch { playlistsRepository.create(name, description) }
     }
 
     private companion object {

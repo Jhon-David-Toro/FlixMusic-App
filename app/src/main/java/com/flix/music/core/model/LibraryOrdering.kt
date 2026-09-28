@@ -53,3 +53,9 @@ fun List<HistoryEntry>.countPlayedOn(date: LocalDate, zone: ZoneId): Int =
     count { entry -> entry.playedAt.toLocalDate(zone) == date }
 
 private fun Instant.toLocalDate(zone: ZoneId): LocalDate = atZone(zone).toLocalDate()
+
+/** Playlists in [order]; "Recientes" is the most recently changed first. */
+fun List<Playlist>.sortedPlaylistsFor(order: SortOrder): List<Playlist> = when (order) {
+    SortOrder.Recent -> sortedByDescending { playlist -> playlist.updatedAt }
+    SortOrder.Alphabetical -> sortedBy { playlist -> playlist.name.lowercase() }
+}

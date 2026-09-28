@@ -23,6 +23,12 @@ interface PlayerController {
         shuffle: Boolean = false,
     )
 
+    /** Inserts [track] right after the current one, or plays it when nothing is queued. */
+    fun playNext(track: Track)
+
+    /** Appends [track] to the end of the queue, or plays it when nothing is queued. */
+    fun addToQueue(track: Track)
+
     fun togglePlayPause()
 
     fun seekTo(position: Duration)

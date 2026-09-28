@@ -38,6 +38,18 @@ class FakePlayerController : PlayerController {
         lastPlayRequest = PlayRequest(tracks, startIndex, source, shuffle)
     }
 
+    val playNextRequests = mutableListOf<Track>()
+
+    val queueRequests = mutableListOf<Track>()
+
+    override fun playNext(track: Track) {
+        playNextRequests += track
+    }
+
+    override fun addToQueue(track: Track) {
+        queueRequests += track
+    }
+
     override fun togglePlayPause() = Unit
 
     override fun seekTo(position: Duration) = Unit

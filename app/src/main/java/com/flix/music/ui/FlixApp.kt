@@ -49,14 +49,17 @@ import com.flix.music.feature.player.FullPlayer
 import com.flix.music.feature.player.FullPlayerActions
 import com.flix.music.feature.player.MiniPlayer
 import com.flix.music.feature.player.PlayerViewModel
+import com.flix.music.feature.trackmenu.TrackMenuHost
 import com.flix.music.navigation.FlixNavHost
 import com.flix.music.navigation.TopLevelDestination
 import com.flix.music.navigation.navigateToTopLevel
+import com.flix.music.navigation.openPlaylistInLibrary
 
 /**
  * App shell: navigation, the persistent mini player above the bottom bar, and the
  * Full Player as a layer above everything. The artwork is a shared element, so it
  * grows from the mini player into the Full Player (design Motion → "Mini → Full").
+ * [TrackMenuHost] makes the song menu available to every screen.
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -97,64 +100,66 @@ fun FlixApp(playerViewModel: PlayerViewModel = hiltViewModel()) {
     BackHandler(enabled = isExpanded) { playerViewModel.collapse() }
 
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
-        SharedTransitionLayout {
-            Scaffold(
-                containerColor = FlixTheme.colors.background,
-                snackbarHost = {
-                    SnackbarHost(snackbarHostState) { snackbarData -> FlixSnackbar(snackbarData) }
-                },
-                bottomBar = {
-                    Column {
-                        AnimatedVisibility(
-                            visible = hasTrack && !isExpanded,
-                            enter = fadeIn(tween(FlixMotion.SLOW)),
-                            exit = fadeOut(tween(FlixMotion.FAST)),
-                        ) {
-                            MiniPlayer(
-                                state = playerState,
-                                onOpen = playerViewModel::expand,
-                                onPlayPause = playerViewModel::onPlayPause,
-                                onRetry = playerViewModel::onRetry,
-                                onNext = playerViewModel::onNext,
-                                onPrevious = playerViewModel::onPrevious,
-                                isFavorite = isCurrentFavorite,
-                                onToggleFavorite = playerViewModel::onToggleFavorite,
-                                artworkModifier = Modifier.sharedElement(
-                                    rememberSharedContentState(PLAYER_ARTWORK_KEY),
-                                    animatedVisibilityScope = this@AnimatedVisibility,
-                                ),
+        TrackMenuHost(onOpenPlaylist = navController::openPlaylistInLibrary) {
+            SharedTransitionLayout {
+                Scaffold(
+                    containerColor = FlixTheme.colors.background,
+                    snackbarHost = {
+                        SnackbarHost(snackbarHostState) { snackbarData -> FlixSnackbar(snackbarData) }
+                    },
+                    bottomBar = {
+                        Column {
+                            AnimatedVisibility(
+                                visible = hasTrack && !isExpanded,
+                                enter = fadeIn(tween(FlixMotion.SLOW)),
+                                exit = fadeOut(tween(FlixMotion.FAST)),
+                            ) {
+                                MiniPlayer(
+                                    state = playerState,
+                                    onOpen = playerViewModel::expand,
+                                    onPlayPause = playerViewModel::onPlayPause,
+                                    onRetry = playerViewModel::onRetry,
+                                    onNext = playerViewModel::onNext,
+                                    onPrevious = playerViewModel::onPrevious,
+                                    isFavorite = isCurrentFavorite,
+                                    onToggleFavorite = playerViewModel::onToggleFavorite,
+                                    artworkModifier = Modifier.sharedElement(
+                                        rememberSharedContentState(PLAYER_ARTWORK_KEY),
+                                        animatedVisibilityScope = this@AnimatedVisibility,
+                                    ),
+                                )
+                            }
+                            FlixBottomBar(
+                                currentDestination = currentDestination,
+                                onNavigate = { destination -> navController.navigateToTopLevel(destination) },
                             )
                         }
-                        FlixBottomBar(
-                            currentDestination = currentDestination,
-                            onNavigate = { destination -> navController.navigateToTopLevel(destination) },
-                        )
-                    }
-                },
-            ) { innerPadding ->
-                FlixNavHost(navController, Modifier.padding(innerPadding))
-            }
+                    },
+                ) { innerPadding ->
+                    FlixNavHost(navController, Modifier.padding(innerPadding))
+                }
 
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = fadeIn(tween(FlixMotion.SLOW, easing = FlixMotion.Standard)) +
-                    slideInVertically(tween(FlixMotion.SLOW, easing = FlixMotion.Standard)) { fullHeight ->
-                        fullHeight / PLAYER_SLIDE_DIVISOR
-                    },
-                exit = fadeOut(tween(FlixMotion.NORMAL, easing = FlixMotion.Accelerate)) +
-                    slideOutVertically(tween(FlixMotion.NORMAL, easing = FlixMotion.Accelerate)) { fullHeight ->
-                        fullHeight / PLAYER_SLIDE_DIVISOR
-                    },
-            ) {
-                FullPlayer(
-                    state = playerState,
-                    actions = fullPlayerActions,
-                    isFavorite = isCurrentFavorite,
-                    artworkModifier = Modifier.sharedElement(
-                        rememberSharedContentState(PLAYER_ARTWORK_KEY),
-                        animatedVisibilityScope = this@AnimatedVisibility,
-                    ),
-                )
+                AnimatedVisibility(
+                    visible = isExpanded,
+                    enter = fadeIn(tween(FlixMotion.SLOW, easing = FlixMotion.Standard)) +
+                        slideInVertically(tween(FlixMotion.SLOW, easing = FlixMotion.Standard)) { fullHeight ->
+                            fullHeight / PLAYER_SLIDE_DIVISOR
+                        },
+                    exit = fadeOut(tween(FlixMotion.NORMAL, easing = FlixMotion.Accelerate)) +
+                        slideOutVertically(tween(FlixMotion.NORMAL, easing = FlixMotion.Accelerate)) { fullHeight ->
+                            fullHeight / PLAYER_SLIDE_DIVISOR
+                        },
+                ) {
+                    FullPlayer(
+                        state = playerState,
+                        actions = fullPlayerActions,
+                        isFavorite = isCurrentFavorite,
+                        artworkModifier = Modifier.sharedElement(
+                            rememberSharedContentState(PLAYER_ARTWORK_KEY),
+                            animatedVisibilityScope = this@AnimatedVisibility,
+                        ),
+                    )
+                }
             }
         }
     }

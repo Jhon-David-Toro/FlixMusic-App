@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.flix.music.core.data.database.FavoritesDao
 import com.flix.music.core.data.database.FlixDatabase
 import com.flix.music.core.data.database.HistoryDao
+import com.flix.music.core.data.database.PlaylistsDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,4 +27,7 @@ object DatabaseModule {
 
     @Provides
     fun provideHistoryDao(database: FlixDatabase): HistoryDao = database.historyDao()
+
+    @Provides
+    fun providePlaylistsDao(database: FlixDatabase): PlaylistsDao = database.playlistsDao()
 }

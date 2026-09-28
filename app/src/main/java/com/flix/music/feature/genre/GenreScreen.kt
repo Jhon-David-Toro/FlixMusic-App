@@ -48,7 +48,6 @@ import com.flix.music.core.designsystem.component.SkeletonBox
 import com.flix.music.core.designsystem.component.StateView
 import com.flix.music.core.designsystem.component.TrackRow
 import com.flix.music.core.designsystem.component.TrackRowSkeleton
-import com.flix.music.core.designsystem.component.util.toClock
 import com.flix.music.core.designsystem.theme.FlixPreview
 import com.flix.music.core.designsystem.theme.FlixTheme
 import com.flix.music.core.model.Album
@@ -60,6 +59,8 @@ import com.flix.music.core.model.Genres
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.model.distinctArtists
+import com.flix.music.core.ui.LocalTrackMenu
+import com.flix.music.core.ui.open
 import kotlin.time.Duration.Companion.seconds
 
 /** Every user action on the Genre screen. Defaults do nothing, which keeps previews short. */
@@ -233,14 +234,15 @@ private fun LazyListScope.genreSections(
     }
     val visibleSongs = if (showAllSongs) content.tracks else content.tracks.take(SONGS_PREVIEW_COUNT)
     items(visibleSongs, key = { it.id }) { track ->
+        val trackMenu = LocalTrackMenu.current
         TrackRow(
             title = track.title,
             subtitle = track.artistNames,
             artworkUrl = track.artworkUrl,
-            duration = track.duration?.toClock(),
             onClick = { actions.onTrackClick(track) },
             isCurrent = track.id == nowPlaying.trackId,
             isPlaying = nowPlaying.isPlaying,
+            onMoreClick = { trackMenu.open(track) },
         )
     }
 

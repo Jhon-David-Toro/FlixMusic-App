@@ -1,7 +1,9 @@
 package com.flix.music.core.designsystem.component
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
@@ -13,9 +15,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.flix.music.core.designsystem.theme.FlixTheme
 
-/** Primary button (`.btn.b1`): Lumen violet pill. At most one per screen. */
+/**
+ * Primary button (`.btn.b1`): Lumen violet pill. At most one per screen.
+ * [compact] is the 32dp `.bsm` size used in top bars ("Guardar").
+ */
 @Composable
 fun FlixPrimaryButton(
     text: String,
@@ -23,6 +30,7 @@ fun FlixPrimaryButton(
     modifier: Modifier = Modifier,
     @DrawableRes icon: Int? = null,
     enabled: Boolean = true,
+    compact: Boolean = false,
 ) {
     FlixButton(
         text = text,
@@ -32,6 +40,7 @@ fun FlixPrimaryButton(
         modifier = modifier,
         icon = icon,
         enabled = enabled,
+        compact = compact,
     )
 }
 
@@ -52,6 +61,7 @@ fun FlixSecondaryButton(
         modifier = modifier,
         icon = icon,
         enabled = enabled,
+        compact = false,
     )
 }
 
@@ -65,10 +75,13 @@ private fun FlixButton(
     modifier: Modifier,
     @DrawableRes icon: Int?,
     enabled: Boolean,
+    compact: Boolean,
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.alpha(if (enabled) 1f else DISABLED_ALPHA),
+        modifier = modifier
+            .alpha(if (enabled) 1f else DISABLED_ALPHA)
+            .then(if (compact) Modifier.height(COMPACT_HEIGHT) else Modifier),
         enabled = enabled,
         shape = FlixTheme.shapes.pill,
         colors = ButtonDefaults.buttonColors(
@@ -77,7 +90,11 @@ private fun FlixButton(
             disabledContainerColor = containerColor,
             disabledContentColor = contentColor,
         ),
-        contentPadding = if (icon != null) ButtonDefaults.ButtonWithIconContentPadding else ButtonDefaults.ContentPadding,
+        contentPadding = when {
+            compact -> PaddingValues(horizontal = 14.dp)
+            icon != null -> ButtonDefaults.ButtonWithIconContentPadding
+            else -> ButtonDefaults.ContentPadding
+        },
     ) {
         if (icon != null) {
             Icon(
@@ -87,8 +104,12 @@ private fun FlixButton(
             )
             Spacer(Modifier.width(ButtonDefaults.IconSpacing))
         }
-        Text(text, style = FlixTheme.typography.label)
+        Text(
+            text = text,
+            style = if (compact) FlixTheme.typography.caption.copy(fontWeight = FontWeight.SemiBold) else FlixTheme.typography.label,
+        )
     }
 }
 
 private const val DISABLED_ALPHA = 0.38f
+private val COMPACT_HEIGHT = 32.dp

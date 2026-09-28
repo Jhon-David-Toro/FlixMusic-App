@@ -32,6 +32,7 @@ internal fun playbackSourceLabel(source: PlaybackSource): String = when (source)
     is PlaybackSource.Genre -> stringResource(R.string.player_source_genre, source.name)
     PlaybackSource.Favorites -> stringResource(R.string.player_source_favorites)
     PlaybackSource.History -> stringResource(R.string.player_source_history)
+    is PlaybackSource.Playlist -> source.name
 }
 
 @StringRes

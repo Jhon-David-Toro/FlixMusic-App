@@ -1,0 +1,215 @@
+package com.flix.music.feature.trackmenu
+
+import android.content.Context
+import android.content.Intent
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.flix.music.R
+import com.flix.music.core.designsystem.component.AddToPlaylistSheet
+import com.flix.music.core.designsystem.component.CreatePlaylistDialog
+import com.flix.music.core.designsystem.component.FlixBottomSheet
+import com.flix.music.core.designsystem.component.FlixSnackbarVisuals
+import com.flix.music.core.designsystem.component.LocalSnackbarHostState
+import com.flix.music.core.designsystem.component.SheetHeader
+import com.flix.music.core.designsystem.component.SheetQuickAction
+import com.flix.music.core.designsystem.component.SheetQuickActions
+import com.flix.music.core.designsystem.component.SheetRow
+import com.flix.music.core.designsystem.theme.FlixMotion
+import com.flix.music.core.designsystem.theme.FlixTheme
+import com.flix.music.core.model.Track
+import com.flix.music.core.ui.LocalTrackMenu
+import com.flix.music.core.ui.TrackMenuLauncher
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/** Which part of the song menu flow is on screen. */
+private sealed interface TrackMenuStep {
+    val track: Track
+
+    data class Actions(override val track: Track, val onRemoveFromHistory: (() -> Unit)?) : TrackMenuStep
+    data class PickPlaylist(override val track: Track) : TrackMenuStep
+    data class CreatePlaylist(override val track: Track) : TrackMenuStep
+}
+
+/**
+ * Hosts the song menu for the whole app: provides [LocalTrackMenu] to [content] and
+ * shows the menu sheet, the "Añadir a playlist" picker and the "Nueva playlist" dialog.
+ * "Ver" on the confirmation snackbar calls [onOpenPlaylist].
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TrackMenuHost(
+    onOpenPlaylist: (playlistId: Long) -> Unit,
+    viewModel: TrackMenuViewModel = hiltViewModel(),
+    content: @Composable () -> Unit,
+) {
+    var step by remember { mutableStateOf<TrackMenuStep?>(null) }
+    val launcher = remember { TrackMenuLauncher { track, onRemove -> step = TrackMenuStep.Actions(track, onRemove) } }
+    val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    val playlists by viewModel.playlists.collectAsStateWithLifecycle()
+    val snackbarHostState = LocalSnackbarHostState.current
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    fun confirmAdded(playlistName: String, playlistId: Long) {
+        coroutineScope.launch {
+            val result = snackbarHostState.showSnackbar(
+                FlixSnackbarVisuals(
+                    message = context.getString(R.string.add_to_playlist_done, playlistName),
+                    icon = R.drawable.ic_check_circle_filled,
+                    actionLabel = context.getString(R.string.action_view),
+                ),
+            )
+            if (result == SnackbarResult.ActionPerformed) onOpenPlaylist(playlistId)
+        }
+    }
+
+    fun confirm(message: String) {
+        coroutineScope.launch { snackbarHostState.showSnackbar(message) }
+    }
+
+    CompositionLocalProvider(LocalTrackMenu provides launcher, content = content)
+
+    when (val currentStep = step) {
+        null -> Unit
+        is TrackMenuStep.Actions -> {
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            val track = currentStep.track
+            val isFavorite = track.id in favoriteIds
+
+            fun closeThen(action: () -> Unit) {
+                coroutineScope.launch {
+                    sheetState.hide()
+                    step = null
+                    action()
+                }
+            }
+
+            FlixBottomSheet(onDismiss = { step = null }, sheetState = sheetState) {
+                SheetHeader(
+                    title = track.title,
+                    subtitle = listOfNotNull(track.artistNames, track.album?.name)
+                        .filter { part -> part.isNotBlank() }
+                        .joinToString(" · "),
+                    artworkUrl = track.artworkUrl,
+                )
+                SheetQuickActions {
+                    SheetQuickAction(
+                        icon = R.drawable.ic_playlist_play,
+                        label = stringResource(R.string.track_play_next),
+                        onClick = {
+                            closeThen {
+                                viewModel.onPlayNext(track)
+                                confirm(context.getString(R.string.track_play_next_done))
+                            }
+                        },
+                    )
+                    SheetQuickAction(
+                        icon = R.drawable.ic_add_to_queue,
+                        label = stringResource(R.string.track_add_to_queue),
+                        onClick = {
+                            closeThen {
+                                viewModel.onAddToQueue(track)
+                                confirm(context.getString(R.string.track_add_to_queue_done))
+                            }
+                        },
+                    )
+                    SheetQuickAction(
+                        icon = if (isFavorite) R.drawable.ic_favorite_filled else R.drawable.ic_favorite,
+                        label = stringResource(R.string.track_favorite),
+                        iconTint = if (isFavorite) FlixTheme.colors.primaryContent else FlixTheme.colors.textPrimary,
+                        onClick = {
+                            closeThen {
+                                viewModel.onToggleFavorite(track)
+                                confirm(
+                                    context.getString(
+                                        if (isFavorite) R.string.favorite_removed else R.string.favorite_added,
+                                    ),
+                                )
+                            }
+                        },
+                    )
+                }
+                SheetRow(
+                    icon = R.drawable.ic_playlist_add,
+                    label = stringResource(R.string.add_to_playlist),
+                    onClick = { closeThen { step = TrackMenuStep.PickPlaylist(track) } },
+                )
+                currentStep.onRemoveFromHistory?.let { removeFromHistory ->
+                    SheetRow(
+                        icon = R.drawable.ic_delete,
+                        label = stringResource(R.string.history_remove_entry),
+                        onClick = { closeThen(removeFromHistory) },
+                    )
+                }
+                SheetRow(
+                    icon = R.drawable.ic_share,
+                    label = stringResource(R.string.action_share),
+                    onClick = { closeThen { context.shareTrack(track) } },
+                )
+            }
+        }
+        is TrackMenuStep.PickPlaylist -> {
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            var pickedPlaylistId by remember { mutableStateOf<Long?>(null) }
+            AddToPlaylistSheet(
+                trackId = currentStep.track.id,
+                playlists = playlists,
+                pickedPlaylistId = pickedPlaylistId,
+                sheetState = sheetState,
+                onDismiss = { step = null },
+                onCreateNew = {
+                    coroutineScope.launch {
+                        sheetState.hide()
+                        step = TrackMenuStep.CreatePlaylist(currentStep.track)
+                    }
+                },
+                onPick = { playlist ->
+                    pickedPlaylistId = playlist.id
+                    coroutineScope.launch {
+                        val added = viewModel.addToPlaylist(playlist, currentStep.track)
+                        delay(PICK_CONFIRMATION_MILLIS)
+                        sheetState.hide()
+                        step = null
+                        if (added) confirmAdded(playlist.name, playlist.id)
+                    }
+                },
+            )
+        }
+        is TrackMenuStep.CreatePlaylist -> CreatePlaylistDialog(
+            onDismiss = { step = null },
+            onCreate = { name, description ->
+                step = null
+                coroutineScope.launch {
+                    val playlistId = viewModel.createPlaylistWith(name, description, currentStep.track)
+                    confirmAdded(name.trim(), playlistId)
+                }
+            },
+        )
+    }
+}
+
+/** Shares the song as text with a YouTube Music link, which is where its id comes from. */
+private fun Context.shareTrack(track: Track) {
+    val text = getString(R.string.track_share_text, track.title, track.artistNames, track.id)
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    startActivity(Intent.createChooser(sendIntent, null))
+}
+
+/** Check shown on the picked playlist before closing (design: fast + 300 ms). */
+private const val PICK_CONFIRMATION_MILLIS = FlixMotion.FAST + 300L

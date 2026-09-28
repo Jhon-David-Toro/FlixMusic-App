@@ -132,4 +132,63 @@
     <string name="search_error_upstream_body">El catálogo de música no contestó. Suele resolverse en unos segundos.</string>
     <string name="error_unknown_title">No pudimos cargar esto</string>
     <string name="error_unknown_body">Vuelve a intentarlo en unos segundos.</string>
+    <string name="action_close">Cerrar</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_share">Compartir</string>
+    <string name="action_view">Ver</string>
+    <string name="action_move_up">Mover arriba</string>
+    <string name="action_move_down">Mover abajo</string>
+
+    <string name="track_more_options">Más opciones de %1$s</string>
+    <string name="track_play_next">Reproducir siguiente</string>
+    <string name="track_play_next_done">Sonará a continuación</string>
+    <string name="track_add_to_queue">Añadir a la cola</string>
+    <string name="track_add_to_queue_done">Añadida a la cola</string>
+    <string name="track_favorite">Favorito</string>
+    <string name="track_share_text">%1$s — %2$s\nhttps://music.youtube.com/watch?v=%3$s</string>
+    <string name="favorite_added">Añadida a favoritos</string>
+
+    <string name="add_to_playlist">Añadir a playlist</string>
+    <string name="add_to_playlist_search">Buscar en tus playlists</string>
+    <string name="add_to_playlist_already_added">Ya está en esta playlist</string>
+    <string name="add_to_playlist_done">Añadida a %1$s</string>
+
+    <string name="playlist_create_title">Nueva playlist</string>
+    <string name="playlist_create_action">Crear playlist</string>
+    <string name="playlist_create_confirm">Crear</string>
+    <string name="playlist_created">Playlist creada</string>
+    <string name="playlist_field_name">Nombre</string>
+    <string name="playlist_field_description">Descripción</string>
+    <string name="playlist_field_description_optional">Descripción (opcional)</string>
+    <string name="playlist_description_placeholder">Añade una descripción</string>
+    <string name="playlist_name_counter">%1$d / %2$d</string>
+    <string name="playlist_cover_automatic">Portada: automática con tus canciones</string>
+    <string name="playlist_empty_caption">Vacía</string>
+    <string name="playlist_empty_title">Tu playlist está vacía</string>
+    <string name="playlist_empty_body">Busca canciones y añádelas desde ⋯ → Añadir a playlist.</string>
+    <string name="playlist_summary_empty">Creada por ti · 0 canciones</string>
+    <string name="playlist_play">Reproducir</string>
+    <string name="playlist_edit">Editar playlist</string>
+    <string name="playlist_edit_short">Editar</string>
+    <string name="playlist_delete">Eliminar playlist</string>
+    <string name="playlist_delete_title">¿Eliminar “%1$s”?</string>
+    <string name="playlist_delete_message">No se puede deshacer.</string>
+    <string name="playlist_delete_confirm">Eliminar</string>
+    <string name="playlist_discard_title">¿Descartar los cambios?</string>
+    <string name="playlist_discard_message">Lo que cambiaste en esta playlist no se guardará.</string>
+    <string name="playlist_discard_confirm">Descartar</string>
+    <string name="playlist_keep_editing">Seguir editando</string>
+    <string name="playlist_remove_track">Quitar</string>
+    <string name="playlist_remove_track_named">Quitar %1$s de la playlist</string>
+    <string name="playlist_track_removed">Quitada de la playlist</string>
+    <string name="library_playlist_empty">Playlist · vacía</string>
+
+    <plurals name="playlist_summary">
+        <item quantity="one">Creada por ti · %1$d canción · %2$s</item>
+        <item quantity="other">Creada por ti · %1$d canciones · %2$s</item>
+    </plurals>
+    <plurals name="library_playlist_count">
+        <item quantity="one">Playlist · %1$d canción</item>
+        <item quantity="other">Playlist · %1$d canciones</item>
+    </plurals>
 </resources>

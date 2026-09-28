@@ -6,6 +6,8 @@ import com.flix.music.core.data.repository.HistoryRepository
 import com.flix.music.core.data.repository.HistoryRepositoryImpl
 import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.data.repository.MusicRepositoryImpl
+import com.flix.music.core.data.repository.PlaylistsRepository
+import com.flix.music.core.data.repository.PlaylistsRepositoryImpl
 import com.flix.music.core.data.repository.RecentSearchesRepository
 import com.flix.music.core.data.repository.RecentSearchesRepositoryImpl
 import dagger.Binds
@@ -33,4 +35,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindHistoryRepository(impl: HistoryRepositoryImpl): HistoryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPlaylistsRepository(impl: PlaylistsRepositoryImpl): PlaylistsRepository
 }

@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
@@ -41,4 +42,57 @@ interface HistoryDao {
 
     @Query("DELETE FROM history")
     suspend fun clear()
+}
+
+@Dao
+interface PlaylistsDao {
+
+    @Transaction
+    @Query("SELECT * FROM playlists")
+    fun observeAll(): Flow<List<PlaylistWithTracks>>
+
+    @Transaction
+    @Query("SELECT * FROM playlists WHERE playlistId = :playlistId")
+    fun observe(playlistId: Long): Flow<PlaylistWithTracks?>
+
+    @Insert
+    suspend fun insert(playlist: PlaylistEntity): Long
+
+    @Query("UPDATE playlists SET name = :name, description = :description, updatedAtMillis = :updatedAtMillis WHERE playlistId = :playlistId")
+    suspend fun update(playlistId: Long, name: String, description: String?, updatedAtMillis: Long)
+
+    @Query("UPDATE playlists SET updatedAtMillis = :updatedAtMillis WHERE playlistId = :playlistId")
+    suspend fun touch(playlistId: Long, updatedAtMillis: Long)
+
+    @Query("DELETE FROM playlists WHERE playlistId = :playlistId")
+    suspend fun delete(playlistId: Long)
+
+    @Query("SELECT COALESCE(MAX(position) + 1, 0) FROM playlist_tracks WHERE playlistId = :playlistId")
+    suspend fun nextPosition(playlistId: Long): Int
+
+    /** Returns -1 when the song is already in the playlist (design: "no duplican"). */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertTrack(track: PlaylistTrackEntity): Long
+
+    @Query("DELETE FROM playlist_tracks WHERE playlistId = :playlistId")
+    suspend fun deleteTracks(playlistId: Long)
+
+    @Insert
+    suspend fun insertTracks(tracks: List<PlaylistTrackEntity>)
+
+    /** Appends [track] at the end. Returns false when it was already there. */
+    @Transaction
+    suspend fun appendTrack(playlistId: Long, track: StoredTrack, updatedAtMillis: Long): Boolean {
+        val added = insertTrack(PlaylistTrackEntity(playlistId, nextPosition(playlistId), track)) != -1L
+        if (added) touch(playlistId, updatedAtMillis)
+        return added
+    }
+
+    /** Saves the edit form: name, description and the whole track list in its new order. */
+    @Transaction
+    suspend fun replace(playlistId: Long, name: String, description: String?, tracks: List<StoredTrack>, updatedAtMillis: Long) {
+        update(playlistId, name, description, updatedAtMillis)
+        deleteTracks(playlistId)
+        insertTracks(tracks.mapIndexed { position, track -> PlaylistTrackEntity(playlistId, position, track) })
+    }
 }

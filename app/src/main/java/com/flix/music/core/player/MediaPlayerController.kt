@@ -101,18 +101,22 @@ class MediaPlayerController @Inject constructor(
 
     override fun play(tracks: List<Track>, startIndex: Int, source: PlaybackSource, shuffle: Boolean) {
         if (tracks.isEmpty()) return
-        this.source = source
-        queuedTracks = tracks.associateBy { it.id }
-        withController { mediaController ->
-            mediaController.shuffleModeEnabled = shuffle
-            mediaController.setMediaItems(
-                tracks.map { it.toMediaItem() },
-                startIndex.coerceIn(tracks.indices),
-                0L,
-            )
-            mediaController.prepare()
-            mediaController.play()
+        withController { mediaController -> startQueue(mediaController, tracks, startIndex, source, shuffle) }
+    }
+
+    override fun playNext(track: Track) = enqueue(track) { mediaController ->
+        mediaController.currentMediaItemIndex + 1
+    }
+
+    override fun addToQueue(track: Track) = enqueue(track) { mediaController -> mediaController.mediaItemCount }
+
+    private fun enqueue(track: Track, insertIndex: (MediaController) -> Int) = withController { mediaController ->
+        if (mediaController.mediaItemCount == 0) {
+            startQueue(mediaController, listOf(track), startIndex = 0, source = null, shuffle = false)
+            return@withController
         }
+        queuedTracks = queuedTracks + (track.id to track)
+        mediaController.addMediaItem(insertIndex(mediaController), track.toMediaItem())
     }
 
     override fun togglePlayPause() = withController { mediaController ->
@@ -148,6 +152,21 @@ class MediaPlayerController @Inject constructor(
             mediaController.seekTo(0, 0L)
         }
         retriedCurrentTrack = false
+        mediaController.prepare()
+        mediaController.play()
+    }
+
+    private fun startQueue(
+        mediaController: MediaController,
+        tracks: List<Track>,
+        startIndex: Int,
+        source: PlaybackSource?,
+        shuffle: Boolean,
+    ) {
+        this.source = source
+        queuedTracks = tracks.associateBy { it.id }
+        mediaController.shuffleModeEnabled = shuffle
+        mediaController.setMediaItems(tracks.map { it.toMediaItem() }, startIndex.coerceIn(tracks.indices), 0L)
         mediaController.prepare()
         mediaController.play()
     }

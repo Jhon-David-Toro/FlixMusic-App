@@ -7,7 +7,7 @@ import com.flix.music.core.navigation.TopLevelRoute
 import com.flix.music.feature.library.LibraryScreen
 import kotlinx.serialization.Serializable
 
-/** The Library tab: a nested graph so Favorites and History keep the tab selected. */
+/** The Library tab: a nested graph so Favorites, History and playlists keep the tab selected. */
 @Serializable
 data object LibraryGraph : TopLevelRoute
 
@@ -17,6 +17,7 @@ data object LibraryRoute
 fun NavGraphBuilder.libraryGraph(
     onOpenFavorites: () -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenPlaylist: (playlistId: Long) -> Unit,
     onBrowseMusic: () -> Unit,
     nestedDestinations: NavGraphBuilder.() -> Unit,
 ) {
@@ -25,6 +26,7 @@ fun NavGraphBuilder.libraryGraph(
             LibraryScreen(
                 onOpenFavorites = onOpenFavorites,
                 onOpenHistory = onOpenHistory,
+                onOpenPlaylist = onOpenPlaylist,
                 onBrowseMusic = onBrowseMusic,
             )
         }
