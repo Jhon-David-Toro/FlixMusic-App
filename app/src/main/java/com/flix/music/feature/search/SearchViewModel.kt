@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.model.FlixException
+import com.flix.music.core.model.distinctAlbums
+import com.flix.music.core.model.distinctArtists
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -30,8 +32,16 @@ class SearchViewModel @Inject constructor(
 
     private var searchJob: Job? = null
 
+    var filter by mutableStateOf(SearchFilter.All)
+        private set
+
+    fun onFilterChange(newFilter: SearchFilter) {
+        filter = newFilter
+    }
+
     fun onQueryChange(newQuery: String) {
         query = newQuery
+        filter = SearchFilter.All
         searchJob?.cancel()
 
         if (newQuery.trim().length < MIN_QUERY_LENGTH) {
@@ -52,10 +62,19 @@ class SearchViewModel @Inject constructor(
     }
 
     private suspend fun search(searchQuery: String) {
-        _uiState.value = SearchUiState.Loading
+        val previousResults = _uiState.value as? SearchUiState.Results
+        _uiState.value = SearchUiState.Loading(previous = previousResults)
         _uiState.value = try {
             val tracks = repository.search(searchQuery)
-            if (tracks.isEmpty()) SearchUiState.Empty(searchQuery) else SearchUiState.Results(tracks)
+            if (tracks.isEmpty()) {
+                SearchUiState.Empty(searchQuery)
+            } else {
+                SearchUiState.Results(
+                    tracks = tracks,
+                    artists = tracks.distinctArtists(),
+                    albums = tracks.distinctAlbums(),
+                )
+            }
         } catch (exception: FlixException) {
             SearchUiState.Error(exception.error)
         }

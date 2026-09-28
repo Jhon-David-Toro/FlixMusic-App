@@ -10,9 +10,17 @@
     <string name="search_clear">Borrar búsqueda</string>
     <string name="search_idle_title">Encuentra tu música</string>
     <string name="search_idle_body">Escribe el nombre de una canción, un artista o un álbum.</string>
-
     <string name="search_empty_title">No encontramos resultados para “%1$s”</string>
     <string name="search_empty_body">Revisa la ortografía o prueba solo con el nombre del artista o del álbum.</string>
+    <string name="search_filter_all">Todo</string>
+    <string name="search_section_songs">Canciones</string>
+    <string name="search_section_artists">Artistas</string>
+    <string name="search_section_albums">Álbumes</string>
+    <string name="search_best_result">Mejor resultado</string>
+    <string name="see_all">Ver todo</string>
+    <string name="type_song">Canción</string>
+    <string name="type_artist">Artista</string>
+    <string name="play_item">Reproducir %1$s</string>
 
     <string name="action_retry">Reintentar</string>
     <string name="error_no_connection_title">Sin conexión</string>

@@ -11,6 +11,8 @@ class MusicRepositoryImpl @Inject constructor(
 ) : MusicRepository {
 
     override suspend fun search(query: String): List<Track> = apiCall {
-        api.search(query).songs.map { it.toTrack() }
+        api.search(query).songs
+            .map { songDto -> songDto.toTrack() }
+            .distinctBy { it.id }
     }
 }

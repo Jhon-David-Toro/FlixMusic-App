@@ -20,6 +20,10 @@ private val LocalFlixTypography = staticCompositionLocalOf<FlixTypography> {
     error("FlixTypography no provista: envuelve la UI en FlixTheme { ... }")
 }
 
+private val LocalFlixIsDark = staticCompositionLocalOf<Boolean> {
+    error("FlixTheme no provisto: envuelve la UI en FlixTheme { ... }")
+}
+
 private fun FlixColors.toMaterial(dark: Boolean): ColorScheme {
     val base = if (dark) darkColorScheme() else lightColorScheme()
 
@@ -55,7 +59,8 @@ fun FlixTheme(
 
     CompositionLocalProvider(
         LocalFlixColors provides colors,
-        LocalFlixTypography provides FlixTypographyDefault
+        LocalFlixTypography provides FlixTypographyDefault,
+        LocalFlixIsDark provides dark
     ) {
         MaterialTheme(
             colorScheme = colors.toMaterial(dark),
@@ -74,6 +79,10 @@ object FlixTheme {
     val typography: FlixTypography
     @Composable @ReadOnlyComposable
     get() = LocalFlixTypography.current
+
+    val isDark: Boolean
+        @Composable @ReadOnlyComposable
+        get() = LocalFlixIsDark.current
 
     val shapes = FlixShapes
     val spacing = FlixSpacing

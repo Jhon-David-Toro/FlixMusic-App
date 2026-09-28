@@ -35,7 +35,11 @@ class SearchViewModelTest {
         assertEquals(0, repository.searchCount)
         advanceUntilIdle()
         assertEquals(1, repository.searchCount)
-        assertEquals(SearchUiState.Results(listOf(fadeToBlack)), viewModel.uiState.value)
+        assertEquals(
+            // fadeToBlack tiene un artista sin id y no tiene álbum: los derivados salen vacíos.
+            SearchUiState.Results(listOf(fadeToBlack), artists = emptyList(), albums = emptyList()),
+            viewModel.uiState.value,
+        )
     }
 
     @Test
@@ -77,7 +81,11 @@ class SearchViewModelTest {
         viewModel.onRetry()
         advanceUntilIdle()
 
-        assertEquals(SearchUiState.Results(listOf(fadeToBlack)), viewModel.uiState.value)
+        assertEquals(
+            // fadeToBlack tiene un artista sin id y no tiene álbum: los derivados salen vacíos.
+            SearchUiState.Results(listOf(fadeToBlack), artists = emptyList(), albums = emptyList()),
+            viewModel.uiState.value,
+        )
     }
 
     @Test
@@ -90,5 +98,28 @@ class SearchViewModelTest {
 
         assertEquals("", viewModel.query)
         assertEquals(SearchUiState.Idle, viewModel.uiState.value)
+    }
+
+    @Test
+    fun `mientras carga una búsqueda nueva, conserva los resultados anteriores`() = runTest {
+        repository.tracks = listOf(fadeToBlack)
+        viewModel.onQueryChange("fade")
+        advanceUntilIdle()
+        val firstResults = viewModel.uiState.value as SearchUiState.Results
+
+        repository.responseDelayMillis = 1_000 // la siguiente respuesta tarda 1 s
+        viewModel.onQueryChange("fade to")
+        advanceTimeBy(301.milliseconds)         // pasa el debounce: ya está buscando
+
+        assertEquals(SearchUiState.Loading(previous = firstResults), viewModel.uiState.value)
+    }
+
+    @Test
+    fun `una búsqueda nueva vuelve al filtro Todo`() = runTest {
+        viewModel.onFilterChange(SearchFilter.Artists)
+
+        viewModel.onQueryChange("fade")
+
+        assertEquals(SearchFilter.All, viewModel.filter)
     }
 }

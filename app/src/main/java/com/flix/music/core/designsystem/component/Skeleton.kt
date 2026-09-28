@@ -64,7 +64,11 @@ fun SkeletonBox(
 }
 
 @Composable
-fun TrackRowSkeleton(modifier: Modifier = Modifier) {
+fun TrackRowSkeleton(
+    modifier: Modifier = Modifier,
+    titleWidth: Float = 0.7f,
+    subtitleWidth: Float = 0.45f,
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -78,8 +82,19 @@ fun TrackRowSkeleton(modifier: Modifier = Modifier) {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(FlixTheme.spacing.sm),
         ) {
-            SkeletonBox(Modifier.fillMaxWidth(0.7f).height(12.dp))
-            SkeletonBox(Modifier.fillMaxWidth(0.45f).height(10.dp))
+            SkeletonBox(Modifier.fillMaxWidth(titleWidth).height(12.dp))
+            SkeletonBox(Modifier.fillMaxWidth(subtitleWidth).height(10.dp))
         }
     }
+}
+
+@Composable
+fun BestResultCardSkeleton(modifier: Modifier = Modifier) {
+    SkeletonBox(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = FlixTheme.spacing.gutter)
+            .height(FlixTheme.spacing.lg * 2 + BEST_RESULT_ARTWORK),
+        shape = FlixTheme.shapes.lg,
+    )
 }
