@@ -121,7 +121,7 @@
 
     <string name="action_retry">Reintentar</string>
     <string name="error_no_connection_title">Sin conexión</string>
-    <string name="error_no_connection_body">Comprueba tu conexión e inténtalo nuevamente.</string>
+    <string name="error_no_connection_body">Comprueba tu conexión e inténtalo nuevamente. Tu biblioteca sigue disponible.</string>
     <string name="error_server_title">No encontramos tu servidor Flix</string>
     <string name="error_server_body">Comprueba que esté encendido y en la misma red que este teléfono.</string>
     <string name="error_timeout_title">Está tardando demasiado</string>
@@ -338,4 +338,17 @@
         <item quantity="one">≈ %1$s al día · %2$d canción</item>
         <item quantity="other">≈ %1$s al día · %2$d canciones</item>
     </plurals>
+    <string name="action_go_to_library">Ir a Biblioteca</string>
+    <string name="action_check_server">Revisar servidor</string>
+    <string name="connectivity_offline">Sin conexión. Tu biblioteca sigue disponible.</string>
+    <string name="connectivity_back">Conectado de nuevo</string>
+    <string name="onboarding_skip">Omitir</string>
+    <string name="onboarding_next">Siguiente</string>
+    <string name="onboarding_start">Empezar</string>
+    <string name="onboarding_discover_title">Tu música, en primer plano</string>
+    <string name="onboarding_discover_body">Busca cualquier canción, artista o álbum y empieza a escuchar en dos toques.</string>
+    <string name="onboarding_collections_title">Colecciones a tu medida</string>
+    <string name="onboarding_collections_body">Guarda favoritos, crea playlists y sigue a tus artistas. Todo se queda en tu teléfono.</string>
+    <string name="onboarding_player_title">Un reproductor que se aparta</string>
+    <string name="onboarding_player_body">El mini player te acompaña mientras navegas. Desliza hacia arriba para abrirlo y ver la cola.</string>
 </resources>

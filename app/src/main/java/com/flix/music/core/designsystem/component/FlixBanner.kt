@@ -30,12 +30,13 @@ fun InfoBanner(
     modifier: Modifier = Modifier,
     @DrawableRes icon: Int = R.drawable.ic_info,
     iconTint: Color = FlixTheme.colors.info,
+    containerColor: Color = FlixTheme.colors.surfaceVariant,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(FlixTheme.shapes.md)
-            .background(FlixTheme.colors.surfaceVariant)
+            .background(containerColor)
             .padding(horizontal = FlixTheme.spacing.md, vertical = 10.dp),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.spacedBy(10.dp),

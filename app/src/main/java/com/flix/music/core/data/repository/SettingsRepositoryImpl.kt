@@ -30,6 +30,7 @@ class SettingsRepositoryImpl @Inject constructor(
                     ?: AppTheme.System,
                 rememberPlaybackModes = preferences[REMEMBER_MODES_KEY] ?: false,
                 playbackModes = repeatMode?.let { mode -> PlaybackModes(preferences[SHUFFLE_KEY] ?: false, mode) },
+                onboardingCompleted = preferences[ONBOARDING_KEY] ?: false,
             )
         }
 
@@ -48,10 +49,15 @@ class SettingsRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun completeOnboarding() {
+        dataStore.edit { preferences -> preferences[ONBOARDING_KEY] = true }
+    }
+
     private companion object {
         val THEME_KEY = stringPreferencesKey("theme")
         val REMEMBER_MODES_KEY = booleanPreferencesKey("remember_playback_modes")
         val SHUFFLE_KEY = booleanPreferencesKey("shuffle")
         val REPEAT_MODE_KEY = stringPreferencesKey("repeat_mode")
+        val ONBOARDING_KEY = booleanPreferencesKey("onboarding_completed")
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -13,6 +14,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -22,7 +29,13 @@ import androidx.compose.ui.unit.dp
 import com.flix.music.R
 import com.flix.music.core.designsystem.theme.FlixTheme
 import com.flix.music.core.model.FlixError
+import com.flix.music.core.ui.LocalErrorShortcuts
+import com.flix.music.core.ui.LocalIsOnline
 
+/**
+ * Full-screen state (design `empty()`): 72dp icon circle, title, body and up to two
+ * buttons, the primary one first and an optional secondary one beside it.
+ */
 @Composable
 fun StateView(
     @DrawableRes icon: Int,
@@ -31,6 +44,8 @@ fun StateView(
     modifier: Modifier = Modifier,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
+    secondaryLabel: String? = null,
+    onSecondary: (() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier
@@ -65,12 +80,22 @@ fun StateView(
             textAlign = TextAlign.Center,
             modifier = Modifier.widthIn(max = 280.dp),
         )
-        if (actionLabel != null && onAction != null) {
-            FlixPrimaryButton(text = actionLabel, onClick = onAction)
+        Row(horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.sm)) {
+            if (actionLabel != null && onAction != null) {
+                FlixPrimaryButton(text = actionLabel, onClick = onAction)
+            }
+            if (secondaryLabel != null && onSecondary != null) {
+                FlixSecondaryButton(text = secondaryLabel, onClick = onSecondary)
+            }
         }
     }
 }
 
+/**
+ * Error with "Reintentar" (design "Errores"). No connection adds "Ir a Biblioteca" and an
+ * unreachable server adds "Revisar servidor"; both retry by themselves when the phone
+ * comes back online (design: "se reintenta lo que falló").
+ */
 @Composable
 fun ErrorStateView(
     error: FlixError,
@@ -81,12 +106,28 @@ fun ErrorStateView(
 ) {
     val (icon, genericTitle, genericBody) = error.toCopy()
     val isUpstream = error == FlixError.Upstream
+    val shortcuts = LocalErrorShortcuts.current
+    val isOnline = LocalIsOnline.current
+    val currentOnRetry by rememberUpdatedState(onRetry)
+    var wasOffline by remember { mutableStateOf(!isOnline) }
+    LaunchedEffect(isOnline) {
+        if (isOnline && wasOffline) currentOnRetry()
+        wasOffline = !isOnline
+    }
+    val secondary: Pair<Int, () -> Unit>? = when {
+        shortcuts == null -> null
+        error == FlixError.NoConnection -> R.string.action_go_to_library to shortcuts.openLibrary
+        error == FlixError.ServerUnreachable -> R.string.action_check_server to shortcuts.openServerSettings
+        else -> null
+    }
     StateView(
         icon = icon,
         title = stringResource(if (isUpstream) upstreamTitle else genericTitle),
         body = stringResource(if (isUpstream) upstreamBody else genericBody),
         actionLabel = stringResource(R.string.action_retry),
         onAction = onRetry,
+        secondaryLabel = secondary?.let { (label, _) -> stringResource(label) },
+        onSecondary = secondary?.second,
         modifier = modifier,
     )
 }

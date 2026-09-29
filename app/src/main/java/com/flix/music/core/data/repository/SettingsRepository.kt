@@ -15,4 +15,7 @@ interface SettingsRepository {
     suspend fun setRememberPlaybackModes(remember: Boolean)
 
     suspend fun savePlaybackModes(modes: PlaybackModes)
+
+    /** "Omitir" or "Empezar" on the first-run screens: they are not shown again. */
+    suspend fun completeOnboarding()
 }

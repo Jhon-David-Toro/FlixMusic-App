@@ -10,4 +10,5 @@ data class UserSettings(
     val theme: AppTheme = AppTheme.System,
     val rememberPlaybackModes: Boolean = false,
     val playbackModes: PlaybackModes? = null,
+    val onboardingCompleted: Boolean = false,
 )
