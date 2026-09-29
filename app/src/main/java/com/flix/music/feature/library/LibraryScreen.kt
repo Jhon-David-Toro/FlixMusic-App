@@ -1,21 +1,27 @@
 package com.flix.music.feature.library
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -29,16 +35,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.flix.music.R
 import com.flix.music.core.designsystem.component.CreatePlaylistDialog
 import com.flix.music.core.designsystem.component.FavoritesArtwork
@@ -48,17 +57,22 @@ import com.flix.music.core.designsystem.component.FlixSnackbarVisuals
 import com.flix.music.core.designsystem.component.LocalSnackbarHostState
 import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.designsystem.component.PlaylistArtwork
+import com.flix.music.core.designsystem.component.SearchField
 import com.flix.music.core.designsystem.component.SortOrderChip
 import com.flix.music.core.designsystem.component.StateView
 import com.flix.music.core.designsystem.component.TrackRow
 import com.flix.music.core.designsystem.theme.FlixPreview
 import com.flix.music.core.designsystem.theme.FlixTheme
 import com.flix.music.core.designsystem.theme.ThemeMode
+import com.flix.music.core.model.Album
+import com.flix.music.core.model.AlbumRef
+import com.flix.music.core.model.Artist
 import com.flix.music.core.model.ArtistRef
 import com.flix.music.core.model.FavoriteTrack
 import com.flix.music.core.model.Playlist
 import com.flix.music.core.model.SortOrder
 import com.flix.music.core.model.Track
+import com.flix.music.core.ui.LocalDetailNavigator
 import com.flix.music.core.ui.LocalTrackMenu
 import java.time.Instant
 import kotlinx.coroutines.launch
@@ -74,6 +88,10 @@ data class LibraryActions(
     val onSongMore: (Track) -> Unit = {},
     val onOpenPlaylist: (Long) -> Unit = {},
     val onCreatePlaylist: (name: String, description: String) -> Unit = { _, _ -> },
+    val onQueryChange: (String) -> Unit = {},
+    val onToggleLayout: () -> Unit = {},
+    val onOpenAlbum: (Album) -> Unit = {},
+    val onOpenArtist: (Artist) -> Unit = {},
 )
 
 @Composable
@@ -88,10 +106,11 @@ fun LibraryScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val playerState by viewModel.playerState.collectAsStateWithLifecycle()
     val trackMenu = LocalTrackMenu.current
+    val detailNavigator = LocalDetailNavigator.current
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
     val createdMessage = stringResource(R.string.playlist_created)
-    val actions = remember(viewModel, onOpenFavorites, onOpenHistory, onOpenPlaylist, onBrowseMusic, trackMenu) {
+    val actions = remember(viewModel, onOpenFavorites, onOpenHistory, onOpenPlaylist, onBrowseMusic, trackMenu, detailNavigator) {
         LibraryActions(
             onOpenFavorites = onOpenFavorites,
             onOpenHistory = onOpenHistory,
@@ -109,10 +128,17 @@ fun LibraryScreen(
                     )
                 }
             },
+            onQueryChange = viewModel::onQueryChange,
+            onToggleLayout = viewModel::onToggleLayout,
+            onOpenAlbum = { album ->
+                detailNavigator.openAlbum(AlbumRef(album.id, album.name), ArtistRef(null, album.artistName))
+            },
+            onOpenArtist = { artist -> detailNavigator.openArtist(ArtistRef(artist.id, artist.name)) },
         )
     }
     LibraryContent(
         uiState = uiState,
+        query = viewModel.query,
         actions = actions,
         nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
         modifier = modifier,
@@ -124,9 +150,16 @@ fun LibraryContent(
     uiState: LibraryUiState,
     actions: LibraryActions,
     modifier: Modifier = Modifier,
+    query: String = uiState.query,
     nowPlaying: NowPlayingMarker = NowPlayingMarker(),
 ) {
     var creatingPlaylist by rememberSaveable { mutableStateOf(false) }
+    var searching by rememberSaveable { mutableStateOf(query.isNotEmpty()) }
+    val closeSearch = {
+        searching = false
+        actions.onQueryChange("")
+    }
+    BackHandler(enabled = searching, onBack = closeSearch)
     if (creatingPlaylist) {
         CreatePlaylistDialog(
             onCreate = { name, description ->
@@ -154,6 +187,15 @@ fun LibraryContent(
                         .padding(vertical = FlixTheme.spacing.md)
                         .semantics { heading() },
                 )
+                IconButton(onClick = { if (searching) closeSearch() else searching = true }) {
+                    Icon(
+                        painter = painterResource(if (searching) R.drawable.ic_close else R.drawable.ic_search),
+                        contentDescription = stringResource(
+                            if (searching) R.string.library_search_close else R.string.library_search,
+                        ),
+                        tint = FlixTheme.colors.textPrimary,
+                    )
+                }
                 IconButton(onClick = { creatingPlaylist = true }) {
                     Icon(
                         painter = painterResource(R.drawable.ic_add),
@@ -161,6 +203,20 @@ fun LibraryContent(
                         tint = FlixTheme.colors.textPrimary,
                     )
                 }
+            }
+        }
+        if (searching) {
+            item(key = "search") {
+                SearchField(
+                    query = query,
+                    onQueryChange = actions.onQueryChange,
+                    onClear = { actions.onQueryChange("") },
+                    placeholder = stringResource(R.string.library_search_placeholder),
+                    clearLabel = stringResource(R.string.search_clear),
+                    modifier = Modifier
+                        .padding(horizontal = FlixTheme.spacing.gutter)
+                        .padding(bottom = FlixTheme.spacing.md),
+                )
             }
         }
         item(key = "pinned") { PinnedCollections(uiState, actions) }
@@ -181,71 +237,310 @@ fun LibraryContent(
                 }
             }
         }
-        when (uiState.filter) {
-            LibraryFilter.Playlists -> if (uiState.playlists.isEmpty()) {
-                item(key = "playlists-empty") {
-                    StateView(
-                        icon = R.drawable.ic_queue_music,
-                        title = stringResource(R.string.library_no_playlists_title),
-                        body = stringResource(R.string.library_no_playlists_body),
-                        actionLabel = stringResource(R.string.playlist_create_action),
-                        onAction = { creatingPlaylist = true },
-                    )
-                }
-            } else {
-                item(key = "playlists-sort") {
-                    SortOrderChip(
-                        order = uiState.sortOrder,
-                        onOrderChange = actions.onSortOrderChange,
-                        modifier = Modifier
-                            .padding(horizontal = FlixTheme.spacing.gutter)
-                            .padding(top = FlixTheme.spacing.md, bottom = FlixTheme.spacing.xs),
-                    )
-                }
-                items(uiState.playlists, key = { playlist -> "playlist-${playlist.id}" }) { playlist ->
-                    PlaylistRow(
-                        playlist = playlist,
-                        onClick = { actions.onOpenPlaylist(playlist.id) },
-                        modifier = Modifier.animateItem(),
-                    )
-                }
+        if (uiState.isFilterEmpty) {
+            item(key = "empty-${uiState.filter}") {
+                FilterEmptyState(
+                    filter = uiState.filter,
+                    onCreatePlaylist = { creatingPlaylist = true },
+                    onBrowseMusic = actions.onBrowseMusic,
+                )
             }
-            LibraryFilter.Songs -> if (uiState.songs.isEmpty()) {
-                item(key = "songs-empty") {
-                    StateView(
-                        icon = R.drawable.ic_favorite,
-                        title = stringResource(R.string.favorites_empty_title),
-                        body = stringResource(R.string.favorites_empty_body),
-                        actionLabel = stringResource(R.string.action_browse_music),
-                        onAction = actions.onBrowseMusic,
+            return@LazyColumn
+        }
+        item(key = "controls") { LibraryControls(uiState, actions) }
+        when (uiState.filter) {
+            LibraryFilter.Playlists -> collectionItems(
+                items = uiState.playlists,
+                isGrid = uiState.isGrid,
+                key = { playlist -> "playlist-${playlist.id}" },
+                row = { playlist, rowModifier ->
+                    PlaylistRow(playlist, onClick = { actions.onOpenPlaylist(playlist.id) }, modifier = rowModifier)
+                },
+                cell = { playlist, cellModifier ->
+                    GridCell(
+                        title = playlist.name,
+                        caption = playlistCaption(playlist),
+                        onClick = { actions.onOpenPlaylist(playlist.id) },
+                        modifier = cellModifier,
+                    ) { artworkModifier ->
+                        BoxWithConstraints(artworkModifier) {
+                            PlaylistArtwork(
+                                coverUrls = playlist.coverUrls,
+                                size = maxWidth,
+                                cornerRadius = GRID_RADIUS,
+                                stacked = false,
+                            )
+                        }
+                    }
+                },
+            )
+            LibraryFilter.Songs -> items(uiState.songs, key = { it.track.id }) { favorite ->
+                TrackRow(
+                    title = favorite.track.title,
+                    subtitle = favorite.track.artistNames,
+                    artworkUrl = favorite.track.artworkUrl,
+                    onClick = { actions.onSongClick(favorite.track) },
+                    onMoreClick = { actions.onSongMore(favorite.track) },
+                    isCurrent = favorite.track.id == nowPlaying.trackId,
+                    isPlaying = nowPlaying.isPlaying,
+                    modifier = Modifier.animateItem(),
+                )
+            }
+            LibraryFilter.Albums -> collectionItems(
+                items = uiState.albums,
+                isGrid = uiState.isGrid,
+                key = { album -> "album-${album.id}" },
+                row = { album, rowModifier ->
+                    CollectionRow(
+                        title = album.name,
+                        caption = stringResource(R.string.library_album_caption, album.artistName),
+                        artworkUrl = album.artworkUrl,
+                        circular = false,
+                        onClick = { actions.onOpenAlbum(album) },
+                        modifier = rowModifier,
                     )
-                }
-            } else {
-                item(key = "sort") {
-                    SortOrderChip(
-                        order = uiState.sortOrder,
-                        onOrderChange = actions.onSortOrderChange,
-                        modifier = Modifier
-                            .padding(horizontal = FlixTheme.spacing.gutter)
-                            .padding(top = FlixTheme.spacing.md, bottom = FlixTheme.spacing.xs),
+                },
+                cell = { album, cellModifier ->
+                    GridCell(
+                        title = album.name,
+                        caption = album.artistName,
+                        onClick = { actions.onOpenAlbum(album) },
+                        modifier = cellModifier,
+                    ) { artworkModifier -> GridArtwork(album.artworkUrl, circular = false, modifier = artworkModifier) }
+                },
+            )
+            LibraryFilter.Artists -> collectionItems(
+                items = uiState.artists,
+                isGrid = uiState.isGrid,
+                key = { artist -> "artist-${artist.id}" },
+                row = { artist, rowModifier ->
+                    CollectionRow(
+                        title = artist.name,
+                        caption = stringResource(R.string.type_artist),
+                        artworkUrl = artist.artworkUrl,
+                        circular = true,
+                        onClick = { actions.onOpenArtist(artist) },
+                        modifier = rowModifier,
                     )
-                }
-                items(uiState.songs, key = { it.track.id }) { favorite ->
-                    TrackRow(
-                        title = favorite.track.title,
-                        subtitle = favorite.track.artistNames,
-                        artworkUrl = favorite.track.artworkUrl,
-                        onClick = { actions.onSongClick(favorite.track) },
-                        onMoreClick = { actions.onSongMore(favorite.track) },
-                        isCurrent = favorite.track.id == nowPlaying.trackId,
-                        isPlaying = nowPlaying.isPlaying,
-                        modifier = Modifier.animateItem(),
-                    )
-                }
+                },
+                cell = { artist, cellModifier ->
+                    GridCell(
+                        title = artist.name,
+                        caption = stringResource(R.string.type_artist),
+                        onClick = { actions.onOpenArtist(artist) },
+                        modifier = cellModifier,
+                        centered = true,
+                    ) { artworkModifier -> GridArtwork(artist.artworkUrl, circular = true, modifier = artworkModifier) }
+                },
+            )
+        }
+        if (uiState.query.isNotBlank() && uiState.isSelectionEmpty()) {
+            item(key = "no-match") {
+                StateView(
+                    icon = R.drawable.ic_search_off,
+                    title = stringResource(R.string.library_no_match_title, uiState.query.trim()),
+                    body = stringResource(R.string.library_no_match_body),
+                )
             }
         }
     }
 }
+
+private fun LibraryUiState.isSelectionEmpty(): Boolean = when (filter) {
+    LibraryFilter.Playlists -> playlists.isEmpty()
+    LibraryFilter.Songs -> songs.isEmpty()
+    LibraryFilter.Albums -> albums.isEmpty()
+    LibraryFilter.Artists -> artists.isEmpty()
+}
+
+/**
+ * Rows, or a 2-column grid (design `librarygrid`: gap 16dp vertical, 12dp horizontal).
+ * The grid is built from rows of two so it lives inside the same scrolling list.
+ */
+private fun <Item> LazyListScope.collectionItems(
+    items: List<Item>,
+    isGrid: Boolean,
+    key: (Item) -> String,
+    row: @Composable (Item, Modifier) -> Unit,
+    cell: @Composable (Item, Modifier) -> Unit,
+) {
+    if (!isGrid) {
+        items(items, key = key) { item -> row(item, Modifier.animateItem()) }
+        return
+    }
+    items(items.chunked(GRID_COLUMNS), key = { pair -> "grid-" + key(pair.first()) }) { pair ->
+        Row(
+            modifier = Modifier
+                .padding(horizontal = FlixTheme.spacing.gutter)
+                .padding(bottom = FlixTheme.spacing.lg),
+            horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.md),
+        ) {
+            pair.forEach { item -> cell(item, Modifier.weight(1f)) }
+            repeat(GRID_COLUMNS - pair.size) { Spacer(Modifier.weight(1f)) }
+        }
+    }
+}
+
+/** "⇅ Recientes" on the left and the list/grid toggle on the right. */
+@Composable
+private fun LibraryControls(uiState: LibraryUiState, actions: LibraryActions) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = FlixTheme.spacing.gutter, end = FlixTheme.spacing.xs)
+            .padding(top = FlixTheme.spacing.md, bottom = FlixTheme.spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SortOrderChip(order = uiState.sortOrder, onOrderChange = actions.onSortOrderChange)
+        Spacer(Modifier.weight(1f))
+        if (uiState.filter.supportsGrid) {
+            IconButton(onClick = actions.onToggleLayout) {
+                Icon(
+                    painter = painterResource(if (uiState.isGrid) R.drawable.ic_view_list else R.drawable.ic_grid_view),
+                    contentDescription = stringResource(
+                        if (uiState.isGrid) R.string.library_show_list else R.string.library_show_grid,
+                    ),
+                    tint = if (uiState.isGrid) FlixTheme.colors.textPrimary else FlixTheme.colors.textSecondary,
+                )
+            }
+        }
+    }
+}
+
+/** Empty state for each filter (design "Empty states" and "vacío por filtro"). */
+@Composable
+private fun FilterEmptyState(filter: LibraryFilter, onCreatePlaylist: () -> Unit, onBrowseMusic: () -> Unit) {
+    when (filter) {
+        LibraryFilter.Playlists -> StateView(
+            icon = R.drawable.ic_queue_music,
+            title = stringResource(R.string.library_no_playlists_title),
+            body = stringResource(R.string.library_no_playlists_body),
+            actionLabel = stringResource(R.string.playlist_create_action),
+            onAction = onCreatePlaylist,
+        )
+        LibraryFilter.Songs -> StateView(
+            icon = R.drawable.ic_favorite,
+            title = stringResource(R.string.favorites_empty_title),
+            body = stringResource(R.string.favorites_empty_body),
+            actionLabel = stringResource(R.string.action_browse_music),
+            onAction = onBrowseMusic,
+        )
+        LibraryFilter.Albums -> StateView(
+            icon = R.drawable.ic_album,
+            title = stringResource(R.string.library_no_albums_title),
+            body = stringResource(R.string.library_no_albums_body),
+            actionLabel = stringResource(R.string.action_browse_music),
+            onAction = onBrowseMusic,
+        )
+        LibraryFilter.Artists -> StateView(
+            icon = R.drawable.ic_person,
+            title = stringResource(R.string.library_no_artists_title),
+            body = stringResource(R.string.library_no_artists_body),
+            actionLabel = stringResource(R.string.action_browse_music),
+            onAction = onBrowseMusic,
+        )
+    }
+}
+
+/** `.row` for albums and artists: 48dp cover (circle for artists), name and caption. */
+@Composable
+private fun CollectionRow(
+    title: String,
+    caption: String,
+    artworkUrl: String?,
+    circular: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = FlixTheme.spacing.rowHeight)
+            .clickable(onClick = onClick)
+            .padding(horizontal = FlixTheme.spacing.gutter),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.itemGap),
+    ) {
+        AsyncImage(
+            model = artworkUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(48.dp)
+                .clip(if (circular) FlixTheme.shapes.circle else FlixTheme.shapes.sm)
+                .background(FlixTheme.colors.surfaceVariant),
+        )
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = FlixTheme.typography.subtitle,
+                color = FlixTheme.colors.textPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(caption, style = FlixTheme.typography.bodySmall, color = FlixTheme.colors.textSecondary)
+        }
+    }
+}
+
+/** Grid cell: square cover (`.afull`), then title (12sp semibold) and caption. */
+@Composable
+private fun GridCell(
+    title: String,
+    caption: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    centered: Boolean = false,
+    artwork: @Composable (Modifier) -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .clip(FlixTheme.shapes.md)
+            .clickable(onClick = onClick),
+        horizontalAlignment = if (centered) Alignment.CenterHorizontally else Alignment.Start,
+    ) {
+        artwork(
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f),
+        )
+        Text(
+            text = title,
+            style = FlixTheme.typography.caption.copy(fontWeight = FontWeight.SemiBold),
+            color = FlixTheme.colors.textPrimary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        Text(
+            text = caption,
+            style = FlixTheme.typography.caption,
+            color = FlixTheme.colors.textSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun GridArtwork(artworkUrl: String?, circular: Boolean, modifier: Modifier) {
+    AsyncImage(
+        model = artworkUrl,
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = modifier
+            .clip(if (circular) FlixTheme.shapes.circle else RoundedCornerShape(GRID_RADIUS))
+            .background(FlixTheme.colors.surfaceVariant),
+    )
+}
+
+@Composable
+private fun playlistCaption(playlist: Playlist): String =
+    if (playlist.tracks.isEmpty()) {
+        stringResource(R.string.library_playlist_empty)
+    } else {
+        pluralStringResource(R.plurals.library_playlist_count, playlist.tracks.size, playlist.tracks.size)
+    }
 
 /** The two pinned collections (design `library`): Favoritos and Historial as `.card` tiles. */
 @Composable
@@ -295,11 +590,7 @@ private fun PinnedCollections(uiState: LibraryUiState, actions: LibraryActions) 
 /** Playlist row (design `library`): stacked cover, name and "Playlist · N canciones". */
 @Composable
 private fun PlaylistRow(playlist: Playlist, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val caption = if (playlist.tracks.isEmpty()) {
-        stringResource(R.string.library_playlist_empty)
-    } else {
-        pluralStringResource(R.plurals.library_playlist_count, playlist.tracks.size, playlist.tracks.size)
-    }
+    val caption = playlistCaption(playlist)
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -351,7 +642,12 @@ private fun PinnedTile(
 private fun LibraryFilter.label(): Int = when (this) {
     LibraryFilter.Playlists -> R.string.library_filter_playlists
     LibraryFilter.Songs -> R.string.library_filter_songs
+    LibraryFilter.Albums -> R.string.library_filter_albums
+    LibraryFilter.Artists -> R.string.library_filter_artists
 }
+
+private const val GRID_COLUMNS = 2
+private val GRID_RADIUS = 16.dp
 
 private val TILE_ARTWORK_SIZE = 48.dp
 private val TILE_ICON_SIZE = 24.dp

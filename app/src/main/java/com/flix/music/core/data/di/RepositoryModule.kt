@@ -6,6 +6,8 @@ import com.flix.music.core.data.repository.FollowedArtistsRepository
 import com.flix.music.core.data.repository.FollowedArtistsRepositoryImpl
 import com.flix.music.core.data.repository.HistoryRepository
 import com.flix.music.core.data.repository.HistoryRepositoryImpl
+import com.flix.music.core.data.repository.LibraryLayoutRepository
+import com.flix.music.core.data.repository.LibraryLayoutRepositoryImpl
 import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.data.repository.MusicRepositoryImpl
 import com.flix.music.core.data.repository.PlaylistsRepository
@@ -51,4 +53,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSavedAlbumsRepository(impl: SavedAlbumsRepositoryImpl): SavedAlbumsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLibraryLayoutRepository(impl: LibraryLayoutRepositoryImpl): LibraryLayoutRepository
 }

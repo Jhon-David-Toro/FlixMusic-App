@@ -236,4 +236,18 @@
         <item quantity="one">%1$d canción · %2$s</item>
         <item quantity="other">%1$d canciones · %2$s</item>
     </plurals>
+    <string name="library_filter_albums">Álbumes</string>
+    <string name="library_filter_artists">Artistas</string>
+    <string name="library_search">Buscar en tu biblioteca</string>
+    <string name="library_search_close">Cerrar la búsqueda</string>
+    <string name="library_search_placeholder">Buscar en tu biblioteca</string>
+    <string name="library_show_grid">Ver en cuadrícula</string>
+    <string name="library_show_list">Ver en lista</string>
+    <string name="library_album_caption">Álbum · %1$s</string>
+    <string name="library_no_albums_title">Aún no guardas álbumes</string>
+    <string name="library_no_albums_body">Toca ♡ en un álbum y aparecerá aquí.</string>
+    <string name="library_no_artists_title">Aún no sigues artistas</string>
+    <string name="library_no_artists_body">Toca Seguir en un artista y aparecerá aquí.</string>
+    <string name="library_no_match_title">No encontramos “%1$s” en tu biblioteca</string>
+    <string name="library_no_match_body">Revisa la ortografía o prueba en otro filtro.</string>
 </resources>
