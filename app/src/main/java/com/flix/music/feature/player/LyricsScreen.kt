@@ -36,6 +36,7 @@ import com.flix.music.R
 import com.flix.music.core.designsystem.component.PlayPauseButton
 import com.flix.music.core.designsystem.component.SeekBar
 import com.flix.music.core.designsystem.component.StateView
+import com.flix.music.core.designsystem.component.util.rememberArtworkTint
 import com.flix.music.core.designsystem.theme.FlixPreview
 import com.flix.music.core.designsystem.theme.FlixTheme
 import com.flix.music.core.model.ArtistRef

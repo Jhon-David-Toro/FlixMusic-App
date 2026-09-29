@@ -24,3 +24,6 @@ data class AlbumRef(
     val id: String?,
     val name: String,
 )
+
+/** A song plus whether it can be played now (design: "No disponible" when playability ≠ OK). */
+data class SongDetails(val track: Track, val isPlayable: Boolean)

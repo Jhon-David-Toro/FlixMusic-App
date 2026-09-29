@@ -59,8 +59,8 @@ import com.flix.music.core.model.Genres
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.model.distinctArtists
+import com.flix.music.core.ui.LocalDetailNavigator
 import com.flix.music.core.ui.LocalTrackMenu
-import com.flix.music.core.ui.open
 import kotlin.time.Duration.Companion.seconds
 
 /** Every user action on the Genre screen. Defaults do nothing, which keeps previews short. */
@@ -82,13 +82,18 @@ fun GenreScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val playerState by viewModel.playerState.collectAsStateWithLifecycle()
-    val actions = remember(viewModel, onBack) {
+    val detailNavigator = LocalDetailNavigator.current
+    val actions = remember(viewModel, onBack, detailNavigator) {
         GenreActions(
             onBack = onBack,
             onRetry = viewModel::onRetry,
             onPlay = viewModel::onPlay,
             onShuffle = viewModel::onShuffle,
             onTrackClick = viewModel::onTrackClick,
+            onArtistClick = { artist -> detailNavigator.openArtist(ArtistRef(artist.id, artist.name)) },
+            onAlbumClick = { album ->
+                detailNavigator.openAlbum(AlbumRef(album.id, album.name), ArtistRef(null, album.artistName))
+            },
         )
     }
     GenreContent(

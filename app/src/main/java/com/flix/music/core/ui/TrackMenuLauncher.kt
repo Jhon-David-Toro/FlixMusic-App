@@ -5,14 +5,21 @@ import com.flix.music.core.model.Track
 
 /**
  * Opens the song menu (design "Menú de canción") from any screen. The app shell hosts
- * the sheet, so screens only need the track. [onRemoveFromHistory] adds
+ * the sheets, so screens only need the track. [onRemoveFromHistory] adds
  * "Quitar del historial", which only applies inside Historial.
  */
-fun interface TrackMenuLauncher {
-    fun open(track: Track, onRemoveFromHistory: (() -> Unit)?)
+interface TrackMenuLauncher {
+
+    fun open(track: Track, onRemoveFromHistory: (() -> Unit)? = null)
+
+    /** Goes straight to the "Añadir a playlist" picker (e.g. the song screen's button). */
+    fun addToPlaylist(track: Track)
 }
 
-fun TrackMenuLauncher.open(track: Track) = open(track, onRemoveFromHistory = null)
-
 /** Defaults to doing nothing so previews and tests need no host. */
-val LocalTrackMenu = staticCompositionLocalOf { TrackMenuLauncher { _, _ -> } }
+val LocalTrackMenu = staticCompositionLocalOf<TrackMenuLauncher> {
+    object : TrackMenuLauncher {
+        override fun open(track: Track, onRemoveFromHistory: (() -> Unit)?) = Unit
+        override fun addToPlaylist(track: Track) = Unit
+    }
+}

@@ -208,4 +208,32 @@
     <string name="lyrics_close">Volver al reproductor</string>
     <string name="lyrics_unavailable_title">Letra no disponible</string>
     <string name="lyrics_unavailable_body">Todavía no tenemos la letra de esta canción.</string>
+    <string name="type_album">Álbum</string>
+    <string name="player_source_artist">Artista %1$s</string>
+    <string name="player_source_album">Álbum %1$s</string>
+    <string name="player_source_song">Canción “%1$s”</string>
+    <string name="player_open_song">Ver canción</string>
+    <string name="player_open_artist">Ver artista</string>
+    <string name="track_go_to_artist">Ir al artista</string>
+    <string name="track_go_to_album">Ir al álbum</string>
+    <string name="song_from_album">Del álbum</string>
+    <string name="song_album_caption">Álbum · %1$s</string>
+    <string name="song_more_like_this">Más como esta</string>
+    <string name="song_unavailable">Esta canción no se puede reproducir ahora.</string>
+    <string name="artist_follow">Seguir</string>
+    <string name="artist_following">Siguiendo</string>
+    <string name="artist_popular">Populares</string>
+    <string name="artist_show_more">Mostrar más</string>
+    <string name="artist_albums">Álbumes</string>
+    <string name="artist_play">Reproducir %1$s</string>
+    <string name="artist_share_text">Escucha a %1$s en Flix</string>
+    <string name="album_play">Reproducir %1$s</string>
+    <string name="album_derived_notice">Mostramos las canciones que encontramos de este álbum; puede que falte alguna.</string>
+    <string name="album_empty_title">No encontramos canciones de este álbum</string>
+    <string name="album_empty_body">Puede que el catálogo no lo tenga completo. Prueba a buscarlo por su nombre.</string>
+
+    <plurals name="album_summary">
+        <item quantity="one">%1$d canción · %2$s</item>
+        <item quantity="other">%1$d canciones · %2$s</item>
+    </plurals>
 </resources>

@@ -57,6 +57,7 @@ import com.flix.music.R
 import com.flix.music.core.designsystem.component.FavoriteButton
 import com.flix.music.core.designsystem.component.PlayPauseButton
 import com.flix.music.core.designsystem.component.SeekBar
+import com.flix.music.core.designsystem.component.util.rememberArtworkTint
 import com.flix.music.core.designsystem.component.util.rememberDelayedFlag
 import com.flix.music.core.designsystem.component.util.toClock
 import com.flix.music.core.designsystem.theme.FlixMotion
@@ -86,6 +87,8 @@ data class FullPlayerActions(
     val onMore: () -> Unit = {},
     val onOpenQueue: () -> Unit = {},
     val onOpenLyrics: () -> Unit = {},
+    val onOpenSong: (Track) -> Unit = {},
+    val onOpenArtist: (Track) -> Unit = {},
 )
 
 /**
@@ -144,6 +147,8 @@ fun FullPlayer(
                     track = nowPlaying,
                     isFavorite = isFavorite,
                     onToggleFavorite = actions.onToggleFavorite,
+                    onOpenSong = { actions.onOpenSong(nowPlaying) },
+                    onOpenArtist = { actions.onOpenArtist(nowPlaying) },
                     modifier = Modifier.padding(top = FlixTheme.spacing.xxl),
                 )
                 if (state.status == PlaybackStatus.Error) {
@@ -260,11 +265,13 @@ private fun TrackTitle(
     track: Track,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
+    onOpenSong: () -> Unit,
+    onOpenArtist: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f)) {
-            TrackTitleText(track)
+            TrackTitleText(track, onOpenSong, onOpenArtist)
         }
         FavoriteButton(
             isFavorite = isFavorite,
@@ -276,7 +283,7 @@ private fun TrackTitle(
 }
 
 @Composable
-private fun TrackTitleText(track: Track) {
+private fun TrackTitleText(track: Track, onOpenSong: () -> Unit, onOpenArtist: () -> Unit) {
     Column {
         Text(
             text = track.title,
@@ -284,6 +291,7 @@ private fun TrackTitleText(track: Track) {
             color = FlixTheme.colors.textPrimary,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.clickable(onClickLabel = stringResource(R.string.player_open_song), onClick = onOpenSong),
         )
         Text(
             text = track.artistNames,
@@ -291,7 +299,13 @@ private fun TrackTitleText(track: Track) {
             color = FlixTheme.colors.textSecondary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = FlixTheme.spacing.xs),
+            modifier = Modifier
+                .padding(top = FlixTheme.spacing.xs)
+                .clickable(
+                    enabled = track.artists.isNotEmpty(),
+                    onClickLabel = stringResource(R.string.player_open_artist),
+                    onClick = onOpenArtist,
+                ),
         )
     }
 }

@@ -7,19 +7,22 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.flix.music.core.designsystem.theme.FlixTransitions
-import com.flix.music.feature.genre.navigation.genreScreen
-import com.flix.music.feature.genre.navigation.navigateToGenre
-import com.flix.music.feature.home.navigation.HomeRoute
-import com.flix.music.feature.home.navigation.homeScreen
+import com.flix.music.feature.album.navigation.albumScreen
+import com.flix.music.feature.artist.navigation.artistScreen
 import com.flix.music.feature.favorites.navigation.favoritesScreen
 import com.flix.music.feature.favorites.navigation.navigateToFavorites
+import com.flix.music.feature.genre.navigation.genreScreen
+import com.flix.music.feature.genre.navigation.navigateToGenre
 import com.flix.music.feature.history.navigation.historyScreen
 import com.flix.music.feature.history.navigation.navigateToHistory
+import com.flix.music.feature.home.navigation.HomeRoute
+import com.flix.music.feature.home.navigation.homeScreen
 import com.flix.music.feature.library.navigation.libraryGraph
 import com.flix.music.feature.playlist.navigation.navigateToPlaylist
 import com.flix.music.feature.playlist.navigation.navigateToPlaylistEdit
 import com.flix.music.feature.playlist.navigation.playlistScreens
 import com.flix.music.feature.search.navigation.searchGraph
+import com.flix.music.feature.song.navigation.songScreen
 
 @Composable
 fun FlixNavHost(
@@ -56,6 +59,9 @@ fun FlixNavHost(
                 onBrowseMusic = browseMusic,
             )
         }
+        songScreen(onBack = navController::popBackStack)
+        artistScreen(onBack = navController::popBackStack)
+        albumScreen(onBack = navController::popBackStack)
     }
 }
 

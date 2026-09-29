@@ -3,6 +3,7 @@ package com.flix.music.testing
 import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.model.FlixError
 import com.flix.music.core.model.FlixException
+import com.flix.music.core.model.SongDetails
 import com.flix.music.core.model.Track
 import kotlinx.coroutines.delay
 
@@ -27,6 +28,16 @@ class FakeMusicRepository : MusicRepository {
         delay(responseDelayMillis)
         error?.let { throw FlixException(it) }
         return tracks
+    }
+
+    var songDetails: SongDetails? = null
+
+    override fun cachedTrack(trackId: String): Track? = tracks.firstOrNull { it.id == trackId }
+
+    override suspend fun song(trackId: String): SongDetails {
+        delay(responseDelayMillis)
+        error?.let { throw FlixException(it) }
+        return songDetails ?: SongDetails(tracks.first { it.id == trackId }, isPlayable = true)
     }
 
     override suspend fun prefetch(trackId: String) = Unit

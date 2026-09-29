@@ -60,7 +60,6 @@ import com.flix.music.core.model.Playlist
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.totalDuration
 import com.flix.music.core.ui.LocalTrackMenu
-import com.flix.music.core.ui.open
 import kotlinx.coroutines.launch
 import java.time.Instant
 import kotlin.time.Duration.Companion.seconds

@@ -14,10 +14,12 @@ import androidx.room.RoomDatabase
         HistoryEntryEntity::class,
         PlaylistEntity::class,
         PlaylistTrackEntity::class,
+        FollowedArtistEntity::class,
+        SavedAlbumEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 abstract class FlixDatabase : RoomDatabase() {
 
@@ -26,4 +28,8 @@ abstract class FlixDatabase : RoomDatabase() {
     abstract fun historyDao(): HistoryDao
 
     abstract fun playlistsDao(): PlaylistsDao
+
+    abstract fun followedArtistsDao(): FollowedArtistsDao
+
+    abstract fun savedAlbumsDao(): SavedAlbumsDao
 }

@@ -52,3 +52,20 @@ data class PlaylistWithTracks(
     @Relation(parentColumn = "playlistId", entityColumn = "playlistId")
     val tracks: List<PlaylistTrackEntity>,
 )
+
+@Entity(tableName = "followed_artists")
+data class FollowedArtistEntity(
+    @PrimaryKey val artistId: String,
+    val name: String,
+    val artworkUrl: String?,
+    val followedAtMillis: Long,
+)
+
+@Entity(tableName = "saved_albums")
+data class SavedAlbumEntity(
+    @PrimaryKey val albumId: String,
+    val name: String,
+    val artistName: String,
+    val artworkUrl: String?,
+    val savedAtMillis: Long,
+)

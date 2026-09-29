@@ -14,6 +14,9 @@ interface FlixApi {
         @Query("limit") limit: Int = 20
     ): SearchResponseDto
 
+    @GET("api/music/songs/{songId}")
+    suspend fun song(@Path("songId") songId: String): SongDetailDto
+
     /** Resolves and caches the audio URL on the server; the response body is not needed. */
     @GET("api/music/songs/{songId}/stream")
     suspend fun prefetchStream(@Path("songId") songId: String)

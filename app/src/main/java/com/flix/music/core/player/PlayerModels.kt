@@ -19,6 +19,9 @@ sealed interface PlaybackSource {
     data object Favorites : PlaybackSource
     data object History : PlaybackSource
     data class Playlist(val name: String) : PlaybackSource
+    data class Artist(val name: String) : PlaybackSource
+    data class Album(val name: String) : PlaybackSource
+    data class Song(val title: String) : PlaybackSource
 }
 
 /** A queued track and its position in the player's queue, which queue actions address. */

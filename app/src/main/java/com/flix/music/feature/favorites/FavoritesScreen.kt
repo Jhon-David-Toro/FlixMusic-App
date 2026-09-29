@@ -47,7 +47,6 @@ import com.flix.music.core.model.SortOrder
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.totalDuration
 import com.flix.music.core.ui.LocalTrackMenu
-import com.flix.music.core.ui.open
 import java.time.Instant
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.launch

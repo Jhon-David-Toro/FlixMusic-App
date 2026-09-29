@@ -96,3 +96,29 @@ interface PlaylistsDao {
         insertTracks(tracks.mapIndexed { position, track -> PlaylistTrackEntity(playlistId, position, track) })
     }
 }
+
+@Dao
+interface FollowedArtistsDao {
+
+    @Query("SELECT * FROM followed_artists ORDER BY followedAtMillis DESC")
+    fun observeAll(): Flow<List<FollowedArtistEntity>>
+
+    @Upsert
+    suspend fun upsert(artist: FollowedArtistEntity)
+
+    @Query("DELETE FROM followed_artists WHERE artistId = :artistId")
+    suspend fun delete(artistId: String)
+}
+
+@Dao
+interface SavedAlbumsDao {
+
+    @Query("SELECT * FROM saved_albums ORDER BY savedAtMillis DESC")
+    fun observeAll(): Flow<List<SavedAlbumEntity>>
+
+    @Upsert
+    suspend fun upsert(album: SavedAlbumEntity)
+
+    @Query("DELETE FROM saved_albums WHERE albumId = :albumId")
+    suspend fun delete(albumId: String)
+}

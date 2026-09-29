@@ -20,6 +20,21 @@ data class SongDto(
     val thumbnail: String? = null
 )
 
+/** `songs/{id}`: a song plus YouTube's playability status (`OK`, `UNPLAYABLE`...). */
+@Serializable
+data class SongDetailDto(
+    val id: String,
+    val title: String,
+    val artists: List<ArtistDto> = emptyList(),
+    val album: AlbumDto? = null,
+    @SerialName("duration_seconds")
+    val durationSeconds: Int? = null,
+    val thumbnail: String? = null,
+    val playability: String,
+) {
+    fun toSongDto() = SongDto(id, title, artists, album, durationSeconds, thumbnail)
+}
+
 @Serializable
 data class ArtistDto(
     val name: String,

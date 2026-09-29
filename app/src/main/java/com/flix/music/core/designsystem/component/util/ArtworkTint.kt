@@ -1,4 +1,4 @@
-package com.flix.music.feature.player
+package com.flix.music.core.designsystem.component.util
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween

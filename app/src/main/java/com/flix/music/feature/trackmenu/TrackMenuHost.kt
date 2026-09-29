@@ -29,6 +29,7 @@ import com.flix.music.core.designsystem.component.SheetRow
 import com.flix.music.core.designsystem.theme.FlixMotion
 import com.flix.music.core.designsystem.theme.FlixTheme
 import com.flix.music.core.model.Track
+import com.flix.music.core.ui.LocalDetailNavigator
 import com.flix.music.core.ui.LocalTrackMenu
 import com.flix.music.core.ui.TrackMenuLauncher
 import kotlinx.coroutines.delay
@@ -56,7 +57,18 @@ fun TrackMenuHost(
     content: @Composable () -> Unit,
 ) {
     var step by remember { mutableStateOf<TrackMenuStep?>(null) }
-    val launcher = remember { TrackMenuLauncher { track, onRemove -> step = TrackMenuStep.Actions(track, onRemove) } }
+    val launcher = remember {
+        object : TrackMenuLauncher {
+            override fun open(track: Track, onRemoveFromHistory: (() -> Unit)?) {
+                step = TrackMenuStep.Actions(track, onRemoveFromHistory)
+            }
+
+            override fun addToPlaylist(track: Track) {
+                step = TrackMenuStep.PickPlaylist(track)
+            }
+        }
+    }
+    val detailNavigator = LocalDetailNavigator.current
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val snackbarHostState = LocalSnackbarHostState.current
@@ -147,11 +159,18 @@ fun TrackMenuHost(
                     label = stringResource(R.string.add_to_playlist),
                     onClick = { closeThen { step = TrackMenuStep.PickPlaylist(track) } },
                 )
-                currentStep.onRemoveFromHistory?.let { removeFromHistory ->
+                track.artists.firstOrNull()?.let { artist ->
                     SheetRow(
-                        icon = R.drawable.ic_delete,
-                        label = stringResource(R.string.history_remove_entry),
-                        onClick = { closeThen(removeFromHistory) },
+                        icon = R.drawable.ic_person,
+                        label = stringResource(R.string.track_go_to_artist),
+                        onClick = { closeThen { detailNavigator.openArtist(artist) } },
+                    )
+                }
+                track.album?.let { album ->
+                    SheetRow(
+                        icon = R.drawable.ic_album,
+                        label = stringResource(R.string.track_go_to_album),
+                        onClick = { closeThen { detailNavigator.openAlbum(album, track.artists.firstOrNull()) } },
                     )
                 }
                 SheetRow(
@@ -159,6 +178,13 @@ fun TrackMenuHost(
                     label = stringResource(R.string.action_share),
                     onClick = { closeThen { context.shareTrack(track) } },
                 )
+                currentStep.onRemoveFromHistory?.let { removeFromHistory ->
+                    SheetRow(
+                        icon = R.drawable.ic_delete,
+                        label = stringResource(R.string.history_remove_entry),
+                        onClick = { closeThen(removeFromHistory) },
+                    )
+                }
             }
         }
         is TrackMenuStep.PickPlaylist -> {

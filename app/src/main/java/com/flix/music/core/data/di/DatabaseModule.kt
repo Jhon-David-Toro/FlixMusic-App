@@ -3,9 +3,11 @@ package com.flix.music.core.data.di
 import android.content.Context
 import androidx.room.Room
 import com.flix.music.core.data.database.FavoritesDao
+import com.flix.music.core.data.database.FollowedArtistsDao
 import com.flix.music.core.data.database.FlixDatabase
 import com.flix.music.core.data.database.HistoryDao
 import com.flix.music.core.data.database.PlaylistsDao
+import com.flix.music.core.data.database.SavedAlbumsDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,4 +32,10 @@ object DatabaseModule {
 
     @Provides
     fun providePlaylistsDao(database: FlixDatabase): PlaylistsDao = database.playlistsDao()
+
+    @Provides
+    fun provideFollowedArtistsDao(database: FlixDatabase): FollowedArtistsDao = database.followedArtistsDao()
+
+    @Provides
+    fun provideSavedAlbumsDao(database: FlixDatabase): SavedAlbumsDao = database.savedAlbumsDao()
 }

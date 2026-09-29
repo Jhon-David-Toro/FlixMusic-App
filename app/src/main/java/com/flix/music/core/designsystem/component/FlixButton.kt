@@ -1,6 +1,7 @@
 package com.flix.music.core.designsystem.component
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -63,6 +65,33 @@ fun FlixSecondaryButton(
         enabled = enabled,
         compact = false,
     )
+}
+
+/**
+ * Outlined small button (`.btn.bo.bsm`): transparent with a 1dp textTertiary ring, used
+ * for "Seguir / Siguiendo" on artists.
+ */
+@Composable
+fun FlixOutlinedButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    @DrawableRes icon: Int? = null,
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.height(COMPACT_HEIGHT),
+        shape = FlixTheme.shapes.pill,
+        border = BorderStroke(1.dp, FlixTheme.colors.textTertiary),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = FlixTheme.colors.textPrimary),
+        contentPadding = PaddingValues(horizontal = 14.dp),
+    ) {
+        if (icon != null) {
+            Icon(painter = painterResource(icon), contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(text = text, style = FlixTheme.typography.caption.copy(fontWeight = FontWeight.SemiBold))
+    }
 }
 
 /** Disabled buttons fade as a whole to 38 % (design: Buttons → disabled). */

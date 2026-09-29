@@ -33,6 +33,9 @@ internal fun playbackSourceLabel(source: PlaybackSource): String = when (source)
     PlaybackSource.Favorites -> stringResource(R.string.player_source_favorites)
     PlaybackSource.History -> stringResource(R.string.player_source_history)
     is PlaybackSource.Playlist -> source.name
+    is PlaybackSource.Artist -> stringResource(R.string.player_source_artist, source.name)
+    is PlaybackSource.Album -> stringResource(R.string.player_source_album, source.name)
+    is PlaybackSource.Song -> stringResource(R.string.player_source_song, source.title)
 }
 
 /** Second half of the Cola header: "A continuación · de tu búsqueda". */
@@ -43,6 +46,9 @@ internal fun queueSourceSuffix(source: PlaybackSource): String = when (source) {
     PlaybackSource.Favorites -> stringResource(R.string.queue_from_favorites)
     PlaybackSource.History -> stringResource(R.string.queue_from_history)
     is PlaybackSource.Playlist -> stringResource(R.string.queue_from_named, source.name)
+    is PlaybackSource.Artist -> stringResource(R.string.queue_from_named, source.name)
+    is PlaybackSource.Album -> stringResource(R.string.queue_from_named, source.name)
+    is PlaybackSource.Song -> stringResource(R.string.queue_from_named, source.title)
 }
 
 @StringRes

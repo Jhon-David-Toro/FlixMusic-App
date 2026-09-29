@@ -70,8 +70,8 @@ import com.flix.music.core.model.Genres
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.model.distinctArtists
+import com.flix.music.core.ui.LocalDetailNavigator
 import com.flix.music.core.ui.LocalTrackMenu
-import com.flix.music.core.ui.open
 import kotlin.time.Duration.Companion.seconds
 
 /** Every user action on the Search screen. Defaults do nothing, which keeps previews short. */
@@ -99,7 +99,8 @@ fun SearchScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
     val playerState by viewModel.playerState.collectAsStateWithLifecycle()
-    val actions = remember(viewModel, onGenreClick) {
+    val detailNavigator = LocalDetailNavigator.current
+    val actions = remember(viewModel, onGenreClick, detailNavigator) {
         SearchActions(
             onQueryChange = viewModel::onQueryChange,
             onClear = viewModel::onClear,
@@ -110,7 +111,11 @@ fun SearchScreen(
             onClearRecents = viewModel::onClearRecents,
             onGenreClick = onGenreClick,
             onTrackClick = viewModel::onTrackClick,
-            onTrackOpen = viewModel::onTrackClick,
+            onTrackOpen = { track -> detailNavigator.openSong(track.id) },
+            onArtistClick = { artist -> detailNavigator.openArtist(ArtistRef(artist.id, artist.name)) },
+            onAlbumClick = { album ->
+                detailNavigator.openAlbum(AlbumRef(album.id, album.name), ArtistRef(null, album.artistName))
+            },
         )
     }
 

@@ -4,12 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -39,6 +41,8 @@ import com.flix.music.core.designsystem.theme.FlixTheme
  * [onMoreClick] adds the design's default ⋯ button (the duration is then left out, as
  * in the mockups) and long press opens the same menu; [onLongClick] only adds the long
  * press, for rows whose right slot is taken.
+ * [number] replaces the artwork with the track number (`.row .num`, album tracks and
+ * an artist's Populares); the current row then shows the equalizer in its place.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -54,6 +58,7 @@ fun TrackRow(
     trailing: (@Composable () -> Unit)? = null,
     onMoreClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
+    number: Int? = null,
 ) {
     val haptics = LocalHapticFeedback.current
     val openMenu = onMoreClick ?: onLongClick
@@ -83,15 +88,29 @@ fun TrackRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.itemGap),
     ) {
-        AsyncImage(
-            model = artworkUrl,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(48.dp)
-                .clip(FlixTheme.shapes.sm)
-                .background(FlixTheme.colors.surfaceVariant),
-        )
+        if (number != null) {
+            Box(Modifier.width(NUMBER_WIDTH), contentAlignment = Alignment.Center) {
+                if (isCurrent) {
+                    NowPlayingEqualizer(animated = isPlaying)
+                } else {
+                    Text(
+                        text = number.toString(),
+                        style = FlixTheme.typography.caption.copy(fontFeatureSettings = "tnum"),
+                        color = FlixTheme.colors.textTertiary,
+                    )
+                }
+            }
+        } else {
+            AsyncImage(
+                model = artworkUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(FlixTheme.shapes.sm)
+                    .background(FlixTheme.colors.surfaceVariant),
+            )
+        }
         Column(Modifier.weight(1f)) {
             Text(
                 text = title,
@@ -110,7 +129,7 @@ fun TrackRow(
         }
         when {
             trailing != null -> trailing()
-            isCurrent -> NowPlayingEqualizer(animated = isPlaying)
+            isCurrent && number == null -> NowPlayingEqualizer(animated = isPlaying)
             onMoreClick == null && duration != null -> Text(
                 text = duration,
                 style = FlixTheme.typography.caption,
@@ -128,6 +147,8 @@ fun TrackRow(
         }
     }
 }
+
+private val NUMBER_WIDTH = 20.dp
 
 /** Which track is playing, so lists can mark its row. */
 data class NowPlayingMarker(

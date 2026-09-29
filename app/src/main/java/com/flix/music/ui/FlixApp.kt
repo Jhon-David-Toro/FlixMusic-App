@@ -34,20 +34,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavDestination
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.flix.music.R
 import com.flix.music.core.designsystem.component.FlixSnackbar
 import com.flix.music.core.designsystem.component.LocalSnackbarHostState
 import com.flix.music.core.designsystem.theme.FlixMotion
 import com.flix.music.core.designsystem.theme.FlixTheme
+import com.flix.music.core.model.AlbumRef
+import com.flix.music.core.model.ArtistRef
+import com.flix.music.core.model.Track
 import com.flix.music.core.player.PlaybackStatus
 import com.flix.music.core.player.PlayerEvent
+import com.flix.music.core.ui.DetailNavigator
+import com.flix.music.core.ui.LocalDetailNavigator
 import com.flix.music.core.ui.LocalTrackMenu
-import com.flix.music.core.ui.open
+import com.flix.music.feature.album.navigation.navigateToAlbum
+import com.flix.music.feature.artist.navigation.navigateToArtist
 import com.flix.music.feature.player.FullPlayer
 import com.flix.music.feature.player.FullPlayerActions
 import com.flix.music.feature.player.LyricsScreen
@@ -56,6 +60,7 @@ import com.flix.music.feature.player.PlayerLayer
 import com.flix.music.feature.player.PlayerViewModel
 import com.flix.music.feature.player.QueueActions
 import com.flix.music.feature.player.QueueScreen
+import com.flix.music.feature.song.navigation.navigateToSong
 import com.flix.music.feature.trackmenu.TrackMenuHost
 import com.flix.music.navigation.FlixNavHost
 import com.flix.music.navigation.TopLevelDestination
@@ -72,8 +77,7 @@ import com.flix.music.navigation.openPlaylistInLibrary
 @Composable
 fun FlixApp(playerViewModel: PlayerViewModel = hiltViewModel()) {
     val navController = rememberNavController()
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = backStackEntry?.destination
+    val backStack by navController.currentBackStack.collectAsStateWithLifecycle()
     val playerState by playerViewModel.state.collectAsStateWithLifecycle()
     val isCurrentFavorite by playerViewModel.isCurrentFavorite.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -124,7 +128,32 @@ fun FlixApp(playerViewModel: PlayerViewModel = hiltViewModel()) {
         if (playerViewModel.layer == PlayerLayer.NowPlaying) playerViewModel.collapse() else playerViewModel.closeLayer()
     }
 
-    CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
+    val detailNavigator = remember(navController, playerViewModel) {
+        object : DetailNavigator {
+            override fun openSong(trackId: String) {
+                playerViewModel.collapse()
+                navController.navigateToSong(trackId)
+            }
+
+            override fun openArtist(artist: ArtistRef) {
+                playerViewModel.collapse()
+                navController.navigateToArtist(artist.id, artist.name)
+            }
+
+            override fun openAlbum(album: AlbumRef, artist: ArtistRef?) {
+                playerViewModel.collapse()
+                navController.navigateToAlbum(album.id, album.name, artist?.name.orEmpty(), artist?.id)
+            }
+        }
+    }
+
+    val openSongFromPlayer: (Track) -> Unit = { track -> detailNavigator.openSong(track.id) }
+    val openArtistFromPlayer: (Track) -> Unit = { track -> track.artists.firstOrNull()?.let(detailNavigator::openArtist) }
+
+    CompositionLocalProvider(
+        LocalSnackbarHostState provides snackbarHostState,
+        LocalDetailNavigator provides detailNavigator,
+    ) {
         TrackMenuHost(onOpenPlaylist = navController::openPlaylistInLibrary) {
             SharedTransitionLayout {
                 Scaffold(
@@ -155,7 +184,7 @@ fun FlixApp(playerViewModel: PlayerViewModel = hiltViewModel()) {
                                 )
                             }
                             FlixBottomBar(
-                                currentDestination = currentDestination,
+                                selectedTab = selectedTab(backStack),
                                 onNavigate = { destination -> navController.navigateToTopLevel(destination) },
                             )
                         }
@@ -181,6 +210,8 @@ fun FlixApp(playerViewModel: PlayerViewModel = hiltViewModel()) {
                             state = playerState,
                             actions = fullPlayerActions.copy(
                                 onMore = { playerState.current?.let { track -> trackMenu.open(track) } },
+                                onOpenSong = openSongFromPlayer,
+                                onOpenArtist = openArtistFromPlayer,
                             ),
                             isFavorite = isCurrentFavorite,
                             artworkModifier = Modifier.sharedElement(
@@ -221,15 +252,14 @@ private fun PlayerLayerVisibility(visible: Boolean, content: @Composable () -> U
 
 @Composable
 private fun FlixBottomBar(
-    currentDestination: NavDestination?,
+    selectedTab: TopLevelDestination?,
     onNavigate: (TopLevelDestination) -> Unit,
 ) {
     Column {
         HorizontalDivider(thickness = Dp.Hairline, color = FlixTheme.colors.divider)
         NavigationBar(containerColor = FlixTheme.colors.surface) {
             TopLevelDestination.entries.forEach { destination ->
-                val selected = currentDestination?.hierarchy
-                    ?.any { navDestination -> navDestination.hasRoute(destination.route::class) } == true
+                val selected = destination == selectedTab
 
                 NavigationBarItem(
                     selected = selected,
@@ -260,6 +290,18 @@ private fun FlixBottomBar(
         }
     }
 }
+
+/**
+ * The tab that owns the top of the back stack. Song, artist and album screens are
+ * shared by every tab, so the tab is the last graph on the stack, not the current
+ * destination's parent.
+ */
+private fun selectedTab(backStack: List<NavBackStackEntry>): TopLevelDestination? =
+    backStack.asReversed().firstNotNullOfOrNull { entry ->
+        TopLevelDestination.entries.firstOrNull { destination ->
+            entry.destination.hasRoute(destination.route::class)
+        }
+    }
 
 private const val PLAYER_ARTWORK_KEY = "player-artwork"
 private const val PLAYER_SLIDE_DIVISOR = 8
