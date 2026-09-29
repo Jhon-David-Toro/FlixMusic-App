@@ -6,6 +6,7 @@ val localProperties = Properties().apply {
 }
 
 val serverUrl: String = localProperties.getProperty("flix.serverUrl", "http://10.0.2.2:8000/")
+val serverApiKey: String = localProperties.getProperty("flix.apiKey", "")
 
 plugins {
     alias(libs.plugins.android.application)
@@ -29,6 +30,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "SERVER_URL", "\"$serverUrl\"")
+        buildConfigField("String", "SERVER_API_KEY", "\"$serverApiKey\"")
     }
 
     buildTypes {
