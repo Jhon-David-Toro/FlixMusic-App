@@ -250,4 +250,19 @@
     <string name="library_no_artists_body">Toca Seguir en un artista y aparecerá aquí.</string>
     <string name="library_no_match_title">No encontramos “%1$s” en tu biblioteca</string>
     <string name="library_no_match_body">Revisa la ortografía o prueba en otro filtro.</string>
+    <string name="home_greeting_morning">Buenos días</string>
+    <string name="home_greeting_afternoon">Buenas tardes</string>
+    <string name="home_greeting_night">Buenas noches</string>
+    <string name="home_resume">Seguir escuchando</string>
+    <string name="home_resume_play">Reproducir %1$s</string>
+    <string name="home_time_left">quedan %1$s</string>
+    <string name="home_recent">Escuchado recientemente</string>
+    <string name="home_more_from">Más de %1$s</string>
+    <string name="home_section_error">No pudimos cargar esta sección.</string>
+    <string name="home_your_playlists">Tus playlists</string>
+    <string name="home_discover">Descubrir</string>
+    <string name="home_explore">Explorar</string>
+    <string name="home_explore_genre">Explora un género</string>
+    <string name="home_first_run_title">Empecemos por una canción</string>
+    <string name="home_first_run_body">Busca lo que te apetezca o entra por un género. Tu inicio se llenará con lo que escuches.</string>
 </resources>

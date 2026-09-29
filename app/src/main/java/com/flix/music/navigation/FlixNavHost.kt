@@ -39,7 +39,17 @@ fun FlixNavHost(
         popExitTransition = { FlixTransitions.tabExit() },
         popEnterTransition = { FlixTransitions.tabEnter() },
     ) {
-        homeScreen()
+        homeScreen(
+            onOpenHistory = { navController.openInLibrary { navigateToHistory() } },
+            onOpenSearch = browseMusic,
+            onOpenGenre = { genre ->
+                navController.navigateToTopLevel(TopLevelDestination.Search)
+                navController.navigateToGenre(genre.id)
+            },
+            onOpenLibrary = { navController.navigateToTopLevel(TopLevelDestination.Library) },
+            onOpenFavorites = { navController.openInLibrary { navigateToFavorites() } },
+            onOpenPlaylist = navController::openPlaylistInLibrary,
+        )
         searchGraph(
             onGenreClick = { genre -> navController.navigateToGenre(genre.id) },
         ) {
@@ -66,9 +76,12 @@ fun FlixNavHost(
 }
 
 /** Opens a playlist inside the Library tab, e.g. from "Ver" on the "Añadida a …" snackbar. */
-fun NavController.openPlaylistInLibrary(playlistId: Long) {
+fun NavController.openPlaylistInLibrary(playlistId: Long) = openInLibrary { navigateToPlaylist(playlistId) }
+
+/** Switches to the Library tab and opens one of its screens there, so the tab stays right. */
+fun NavController.openInLibrary(navigate: NavController.() -> Unit) {
     navigateToTopLevel(TopLevelDestination.Library)
-    navigateToPlaylist(playlistId)
+    navigate()
 }
 
 /**
