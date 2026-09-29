@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
 data object HomeRoute : TopLevelRoute
 
 fun NavGraphBuilder.homeScreen(
+    onOpenProfile: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenSearch: () -> Unit,
     onOpenGenre: (Genre) -> Unit,
@@ -20,6 +21,7 @@ fun NavGraphBuilder.homeScreen(
 ) {
     composable<HomeRoute> {
         HomeScreen(
+            onOpenProfile = onOpenProfile,
             onOpenHistory = onOpenHistory,
             onOpenSearch = onOpenSearch,
             onOpenGenre = onOpenGenre,

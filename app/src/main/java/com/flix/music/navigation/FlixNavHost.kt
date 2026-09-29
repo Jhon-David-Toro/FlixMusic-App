@@ -21,7 +21,12 @@ import com.flix.music.feature.library.navigation.libraryGraph
 import com.flix.music.feature.playlist.navigation.navigateToPlaylist
 import com.flix.music.feature.playlist.navigation.navigateToPlaylistEdit
 import com.flix.music.feature.playlist.navigation.playlistScreens
+import com.flix.music.feature.profile.navigation.navigateToProfile
+import com.flix.music.feature.profile.navigation.navigateToStats
+import com.flix.music.feature.profile.navigation.profileScreens
 import com.flix.music.feature.search.navigation.searchGraph
+import com.flix.music.feature.settings.navigation.navigateToSettings
+import com.flix.music.feature.settings.navigation.settingsScreen
 import com.flix.music.feature.song.navigation.songScreen
 
 @Composable
@@ -40,6 +45,7 @@ fun FlixNavHost(
         popEnterTransition = { FlixTransitions.tabEnter() },
     ) {
         homeScreen(
+            onOpenProfile = navController::navigateToProfile,
             onOpenHistory = { navController.openInLibrary { navigateToHistory() } },
             onOpenSearch = browseMusic,
             onOpenGenre = { genre ->
@@ -72,6 +78,13 @@ fun FlixNavHost(
         songScreen(onBack = navController::popBackStack)
         artistScreen(onBack = navController::popBackStack)
         albumScreen(onBack = navController::popBackStack)
+        profileScreens(
+            onBack = navController::popBackStack,
+            onOpenSettings = navController::navigateToSettings,
+            onOpenStats = navController::navigateToStats,
+            onOpenHistory = { navController.openInLibrary { navigateToHistory() } },
+        )
+        settingsScreen(onBack = navController::popBackStack)
     }
 }
 

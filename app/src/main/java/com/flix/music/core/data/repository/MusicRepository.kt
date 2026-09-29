@@ -13,6 +13,9 @@ interface MusicRepository {
 
     suspend fun song(trackId: String): SongDetails
 
+    /** Whether the Flix server answers `/health` (Ajustes → Servidor). */
+    suspend fun isServerReachable(): Boolean
+
     /** Warms the server cache for [trackId] so its audio starts instantly when played. */
     suspend fun prefetch(trackId: String)
 }

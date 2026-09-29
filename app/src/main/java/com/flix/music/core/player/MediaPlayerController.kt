@@ -10,6 +10,8 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.flix.music.core.data.repository.HistoryRepository
 import com.flix.music.core.data.repository.MusicRepository
+import com.flix.music.core.data.repository.SettingsRepository
+import com.flix.music.core.model.PlaybackModes
 import com.flix.music.core.model.Track
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -45,12 +48,15 @@ import kotlin.time.Duration.Companion.milliseconds
  * track of the queue stays in [PlaybackStatus.Error] with a retry action.
  * The next track is prefetched through `/stream` so skips start instantly, and every
  * track is added to the history the first time it actually plays.
+ * Shuffle and repeat are saved when they change and restored on start when the user
+ * turned on "Recordar aleatorio y repetir".
  */
 @Singleton
 class MediaPlayerController @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: MusicRepository,
     private val historyRepository: HistoryRepository,
+    private val settingsRepository: SettingsRepository,
 ) : PlayerController {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -91,6 +97,10 @@ class MediaPlayerController @Inject constructor(
         override fun onPlayerError(error: PlaybackException) {
             recoverFromError()
         }
+
+        override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) = savePlaybackModes()
+
+        override fun onRepeatModeChanged(repeatMode: Int) = savePlaybackModes()
 
         override fun onEvents(player: Player, events: Player.Events) {
             publishState(player)
@@ -203,11 +213,37 @@ class MediaPlayerController @Inject constructor(
     private suspend fun connect(): MediaController {
         val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
         val mediaController = MediaController.Builder(context, sessionToken).buildAsync().await()
+        restorePlaybackModes(mediaController)
         mediaController.addListener(listener)
         connectedController = mediaController
         publishState(mediaController)
         updatePositionTicker(mediaController)
         return mediaController
+    }
+
+    private suspend fun restorePlaybackModes(mediaController: MediaController) {
+        val settings = settingsRepository.settings.first()
+        val modes = settings.playbackModes ?: return
+        if (!settings.rememberPlaybackModes) return
+        mediaController.shuffleModeEnabled = modes.shuffle
+        mediaController.repeatMode = when (modes.repeatMode) {
+            RepeatMode.All.name -> Player.REPEAT_MODE_ALL
+            RepeatMode.One.name -> Player.REPEAT_MODE_ONE
+            else -> Player.REPEAT_MODE_OFF
+        }
+    }
+
+    private fun savePlaybackModes() {
+        val state = connectedController ?: return
+        val modes = PlaybackModes(
+            shuffle = state.shuffleModeEnabled,
+            repeatMode = when (state.repeatMode) {
+                Player.REPEAT_MODE_ALL -> RepeatMode.All
+                Player.REPEAT_MODE_ONE -> RepeatMode.One
+                else -> RepeatMode.Off
+            }.name,
+        )
+        scope.launch { runCatching { settingsRepository.savePlaybackModes(modes) } }
     }
 
     private fun withController(action: (MediaController) -> Unit) {

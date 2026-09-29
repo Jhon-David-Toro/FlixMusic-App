@@ -21,6 +21,9 @@ class MusicRepositoryImpl @Inject constructor(
             .onEach { track -> seenTracks[track.id] = track }
     }
 
+    override suspend fun isServerReachable(): Boolean =
+        runCatching { apiCall { api.health() } }.isSuccess
+
     override fun cachedTrack(trackId: String): Track? = seenTracks[trackId]
 
     override suspend fun song(trackId: String): SongDetails = apiCall {

@@ -40,5 +40,7 @@ class FakeMusicRepository : MusicRepository {
         return songDetails ?: SongDetails(tracks.first { it.id == trackId }, isPlayable = true)
     }
 
+    override suspend fun isServerReachable(): Boolean = error == null
+
     override suspend fun prefetch(trackId: String) = Unit
 }

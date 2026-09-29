@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -53,6 +54,7 @@ import com.flix.music.core.designsystem.component.GenreTile
 import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.designsystem.component.PlayPauseButton
 import com.flix.music.core.designsystem.component.PlaylistArtwork
+import com.flix.music.core.designsystem.component.ProfileAvatar
 import com.flix.music.core.designsystem.component.SectionHeader
 import com.flix.music.core.designsystem.component.TrackRow
 import com.flix.music.core.designsystem.component.TrackRowSkeleton
@@ -72,6 +74,7 @@ import kotlin.time.Duration.Companion.seconds
 
 /** Every user action on Home. Defaults do nothing, which keeps previews short. */
 data class HomeActions(
+    val onOpenProfile: () -> Unit = {},
     val onOpenHistory: () -> Unit = {},
     val onOpenSearch: () -> Unit = {},
     val onOpenGenre: (Genre) -> Unit = {},
@@ -88,6 +91,7 @@ data class HomeActions(
 
 @Composable
 fun HomeScreen(
+    onOpenProfile: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenSearch: () -> Unit,
     onOpenGenre: (Genre) -> Unit,
@@ -103,6 +107,7 @@ fun HomeScreen(
     val trackMenu = LocalTrackMenu.current
     val actions = remember(viewModel, detailNavigator, trackMenu) {
         HomeActions(
+            onOpenProfile = onOpenProfile,
             onOpenHistory = onOpenHistory,
             onOpenSearch = onOpenSearch,
             onOpenGenre = onOpenGenre,
@@ -139,7 +144,12 @@ fun HomeContent(
         contentPadding = PaddingValues(bottom = FlixTheme.spacing.xxl),
     ) {
         item(key = "top-bar") {
-            HomeTopBar(greeting = uiState.greeting, showHistory = !uiState.isFirstRun, onOpenHistory = actions.onOpenHistory)
+            HomeTopBar(
+                greeting = uiState.greeting,
+                showShortcuts = !uiState.isFirstRun,
+                onOpenHistory = actions.onOpenHistory,
+                onOpenProfile = actions.onOpenProfile,
+            )
         }
         if (uiState.isFirstRun) {
             firstRun(actions)
@@ -197,9 +207,15 @@ fun HomeContent(
     }
 }
 
-/** Title with the greeting (22sp) and the History shortcut. */
+/** Title with the greeting (22sp), the History shortcut and the profile avatar. */
 @Composable
-private fun HomeTopBar(greeting: Greeting, showHistory: Boolean, onOpenHistory: () -> Unit) {
+private fun HomeTopBar(
+    greeting: Greeting,
+    showShortcuts: Boolean,
+    onOpenHistory: () -> Unit,
+    onOpenProfile: () -> Unit,
+) {
+    val profileLabel = stringResource(R.string.profile_title)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -215,13 +231,16 @@ private fun HomeTopBar(greeting: Greeting, showHistory: Boolean, onOpenHistory: 
                 .weight(1f)
                 .semantics { heading() },
         )
-        if (showHistory) {
+        if (showShortcuts) {
             IconButton(onClick = onOpenHistory) {
                 Icon(
                     painter = painterResource(R.drawable.ic_history),
                     contentDescription = stringResource(R.string.history_title),
                     tint = FlixTheme.colors.textSecondary,
                 )
+            }
+            IconButton(onClick = onOpenProfile) {
+                ProfileAvatar(size = 32.dp, modifier = Modifier.semantics { contentDescription = profileLabel })
             }
         }
     }

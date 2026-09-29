@@ -265,4 +265,77 @@
     <string name="home_explore_genre">Explora un género</string>
     <string name="home_first_run_title">Empecemos por una canción</string>
     <string name="home_first_run_body">Busca lo que te apetezca o entra por un género. Tu inicio se llenará con lo que escuches.</string>
+    <string name="coming_soon">Próximamente</string>
+    <string name="profile_title">Tu perfil</string>
+    <string name="profile_downloads">Descargas</string>
+    <string name="profile_this_month">Este mes</string>
+    <string name="profile_month_empty">Escucha algo y aquí verás tu mes.</string>
+    <string name="profile_month_comparison">escuchadas · %1$s vs. %2$s</string>
+    <string name="profile_top_artist">Artista top</string>
+    <string name="profile_top_song">Canción top</string>
+    <string name="profile_see_stats">Ver estadísticas</string>
+    <string name="stats_title">Estadísticas</string>
+    <string name="stats_week">Semana</string>
+    <string name="stats_month">Mes</string>
+    <string name="stats_year">Año</string>
+    <string name="stats_this_week">Esta semana</string>
+    <string name="stats_computed_locally">Calculado en este dispositivo</string>
+    <string name="stats_daily_activity">Actividad diaria</string>
+    <string name="stats_monthly_activity">Actividad mensual</string>
+    <string name="stats_top_artists">Artistas más escuchados</string>
+    <string name="stats_songs">Canciones</string>
+    <string name="stats_genres">Géneros</string>
+    <string name="stats_genres_soon">Próximamente: necesitamos el género de cada canción para calcularlo.</string>
+    <string name="stats_empty_title">Sin escuchas en este periodo</string>
+    <string name="stats_empty_body">Lo que escuches aparecerá aquí.</string>
+    <string name="stats_bars_description">Minutos escuchados por día</string>
+    <string name="stats_weekday_initials">L,M,X,J,V,S,D</string>
+    <string name="stats_month_initials">E,F,M,A,M,J,J,A,S,O,N,D</string>
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Oscuro</string>
+    <string name="settings_playback">Reproducción</string>
+    <string name="settings_autoplay">Reproducción automática</string>
+    <string name="settings_autoplay_body">Sigue con música parecida al acabar la cola</string>
+    <string name="settings_remember_modes">Recordar aleatorio y repetir</string>
+    <string name="settings_crossfade">Crossfade</string>
+    <string name="settings_crossfade_body">Transición entre canciones</string>
+    <string name="settings_audio_quality">Calidad de audio</string>
+    <string name="settings_audio_quality_automatic">Automática</string>
+    <string name="settings_server">Servidor</string>
+    <string name="settings_server_checking">Comprobando…</string>
+    <string name="settings_server_connected">● Conectado</string>
+    <string name="settings_server_unreachable">● Sin conexión · toca para reintentar</string>
+    <string name="settings_notifications">Notificaciones</string>
+    <string name="settings_new_music">Música nueva de artistas que sigues</string>
+    <string name="settings_data">Datos</string>
+    <string name="settings_clear_cache">Borrar caché</string>
+    <string name="settings_cache_size">%1$s en imágenes y audio temporal</string>
+    <string name="settings_cache_cleared">Caché borrada</string>
+    <string name="settings_history_cleared">Historial borrado</string>
+    <string name="settings_about">Acerca de</string>
+    <string name="settings_version">Versión</string>
+
+    <plurals name="profile_playlists">
+        <item quantity="one">%1$d playlist</item>
+        <item quantity="other">%1$d playlists</item>
+    </plurals>
+    <plurals name="profile_favorites">
+        <item quantity="one">%1$d favorito</item>
+        <item quantity="other">%1$d favoritos</item>
+    </plurals>
+    <plurals name="profile_artists">
+        <item quantity="one">%1$d artista</item>
+        <item quantity="other">%1$d artistas</item>
+    </plurals>
+    <plurals name="stats_times">
+        <item quantity="one">%1$d vez</item>
+        <item quantity="other">%1$d veces</item>
+    </plurals>
+    <plurals name="stats_average">
+        <item quantity="one">≈ %1$s al día · %2$d canción</item>
+        <item quantity="other">≈ %1$s al día · %2$d canciones</item>
+    </plurals>
 </resources>

@@ -1,5 +1,6 @@
 package com.flix.music.core.designsystem.component
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -12,18 +13,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.flix.music.R
 import com.flix.music.core.designsystem.theme.FlixTheme
 
 /**
- * Informative banner (design `.banner.info`): surfaceVariant, radius md, an `info`
- * icon in the info color and 12sp text. Used where content may be incomplete, such as
- * the album tracks derived from search.
+ * Banner (design `.banner`): surfaceVariant, radius md, an 18dp icon and 12sp text.
+ * The default is `.banner.info` (info icon in the info color), used where content may
+ * be incomplete, such as the album tracks derived from search.
  */
 @Composable
-fun InfoBanner(text: String, modifier: Modifier = Modifier) {
+fun InfoBanner(
+    text: String,
+    modifier: Modifier = Modifier,
+    @DrawableRes icon: Int = R.drawable.ic_info,
+    iconTint: Color = FlixTheme.colors.info,
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -34,9 +41,9 @@ fun InfoBanner(text: String, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_info),
+            painter = painterResource(icon),
             contentDescription = null,
-            tint = FlixTheme.colors.info,
+            tint = iconTint,
             modifier = Modifier.size(18.dp),
         )
         Text(text = text, style = FlixTheme.typography.caption, color = FlixTheme.colors.textPrimary)
