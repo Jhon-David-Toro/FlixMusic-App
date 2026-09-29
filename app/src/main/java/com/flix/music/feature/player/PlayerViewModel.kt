@@ -6,10 +6,12 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flix.music.core.data.repository.FavoritesRepository
+import com.flix.music.core.model.Track
 import com.flix.music.core.player.PlaybackStatus
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerEvent
 import com.flix.music.core.player.PlayerState
+import com.flix.music.core.player.QueueItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +22,13 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.time.Duration
 
-/** App-level player UI: the mini player, the Full Player and whether it is expanded. */
+/** Layers inside the Full Player (design Navigation: Cola and Letra open inside the player). */
+enum class PlayerLayer { NowPlaying, Queue, Lyrics }
+
+/**
+ * App-level player UI: the mini player, the Full Player, whether it is expanded and
+ * which layer it shows, plus the queue actions of the Cola layer.
+ */
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
     private val playerController: PlayerController,
@@ -43,9 +51,36 @@ class PlayerViewModel @Inject constructor(
         if (state.value.status != PlaybackStatus.Idle) isExpanded = true
     }
 
+    var layer by mutableStateOf(PlayerLayer.NowPlaying)
+        private set
+
     fun collapse() {
         isExpanded = false
+        layer = PlayerLayer.NowPlaying
     }
+
+    fun openQueue() {
+        layer = PlayerLayer.Queue
+    }
+
+    fun openLyrics() {
+        layer = PlayerLayer.Lyrics
+    }
+
+    /** Back and swipe down from Cola or Letra return to the player, not to the screen below. */
+    fun closeLayer() {
+        layer = PlayerLayer.NowPlaying
+    }
+
+    fun onQueueItemClick(item: QueueItem) = playerController.skipToQueueItem(item.index)
+
+    fun onRemoveQueueItem(index: Int) = playerController.removeQueueItem(index)
+
+    fun onRestoreQueueItem(index: Int, track: Track) = playerController.restoreQueueItem(index, track)
+
+    fun onMoveQueueItem(fromIndex: Int, toIndex: Int) = playerController.moveQueueItem(fromIndex, toIndex)
+
+    fun onClearQueue() = playerController.clearUpNext()
 
     fun onPlayPause() = playerController.togglePlayPause()
 

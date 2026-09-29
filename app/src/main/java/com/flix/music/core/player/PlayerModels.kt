@@ -21,10 +21,15 @@ sealed interface PlaybackSource {
     data class Playlist(val name: String) : PlaybackSource
 }
 
+/** A queued track and its position in the player's queue, which queue actions address. */
+data class QueueItem(val index: Int, val track: Track)
+
 data class PlayerState(
     val status: PlaybackStatus = PlaybackStatus.Idle,
     val current: Track? = null,
     val next: Track? = null,
+    /** What plays after [current], in play order (shuffle included). */
+    val upNext: List<QueueItem> = emptyList(),
     val source: PlaybackSource? = null,
     val position: Duration = Duration.ZERO,
     val bufferedPosition: Duration = Duration.ZERO,

@@ -2,7 +2,6 @@ package com.flix.music.feature.playlist
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
@@ -24,22 +22,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -52,7 +44,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.flix.music.R
@@ -63,6 +54,10 @@ import com.flix.music.core.designsystem.component.LocalSnackbarHostState
 import com.flix.music.core.designsystem.component.PlaylistArtwork
 import com.flix.music.core.designsystem.component.SwipeToRemove
 import com.flix.music.core.designsystem.component.showUndo
+import com.flix.music.core.designsystem.component.util.draggedRow
+import com.flix.music.core.designsystem.component.util.rememberReorderState
+import com.flix.music.core.designsystem.component.util.reorderHandle
+import com.flix.music.core.designsystem.component.util.ReorderState
 import com.flix.music.core.designsystem.theme.FlixPreview
 import com.flix.music.core.designsystem.theme.FlixTheme
 import com.flix.music.core.model.ArtistRef
@@ -136,7 +131,7 @@ fun PlaylistEditContent(
     var confirmingDiscard by rememberSaveable { mutableStateOf(false) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     val listState = rememberLazyListState()
-    val reorder = remember(listState) { ReorderState(listState) }
+    val reorder = rememberReorderState(listState) { key -> key is String && key !in NON_TRACK_KEYS }
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
     val removedMessage = stringResource(R.string.playlist_track_removed)
@@ -171,17 +166,7 @@ fun PlaylistEditContent(
                 val isDragged = reorder.draggedKey == track.id
                 SwipeToRemove(
                     onRemove = { removeWithUndo(track) },
-                    modifier = if (isDragged) {
-                        Modifier
-                            .zIndex(1f)
-                            .graphicsLayer {
-                                translationY = reorder.dragOffset
-                                scaleX = DRAGGED_SCALE
-                                scaleY = DRAGGED_SCALE
-                            }
-                    } else {
-                        Modifier.animateItem()
-                    },
+                    modifier = if (isDragged) Modifier.draggedRow(reorder, track.id) else Modifier.animateItem(),
                 ) {
                     EditTrackRow(
                         track = track,
@@ -330,9 +315,6 @@ private fun EditTrackRow(
     reorder: ReorderState,
     tracks: List<Track>,
 ) {
-    val haptics = LocalHapticFeedback.current
-    val currentTracks by rememberUpdatedState(tracks)
-    val currentOnMove by rememberUpdatedState(onMove)
     val moveUpLabel = stringResource(R.string.action_move_up)
     val moveDownLabel = stringResource(R.string.action_move_down)
     val removeLabel = stringResource(R.string.playlist_remove_track)
@@ -392,24 +374,8 @@ private fun EditTrackRow(
             modifier = Modifier
                 .size(FlixTheme.spacing.touchMin)
                 .clearAndSetSemantics { contentDescription = "" }
-                .pointerInput(track.id) {
-                    detectDragGestures(
-                        onDragStart = {
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            reorder.start(track.id)
-                        },
-                        onDragEnd = reorder::stop,
-                        onDragCancel = reorder::stop,
-                        onDrag = { change, dragAmount ->
-                            change.consume()
-                            val moved = reorder.drag(dragAmount.y) { fromKey, toKey ->
-                                val fromIndex = currentTracks.indexOfFirst { it.id == fromKey }
-                                val toIndex = currentTracks.indexOfFirst { it.id == toKey }
-                                currentOnMove(fromIndex, toIndex)
-                            }
-                            if (moved) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
-                        },
-                    )
+                .reorderHandle(reorder, track.id) { fromKey, toKey ->
+                    onMove(tracks.indexOfFirst { it.id == fromKey }, tracks.indexOfFirst { it.id == toKey })
                 },
             contentAlignment = Alignment.Center,
         ) {
@@ -422,54 +388,8 @@ private fun EditTrackRow(
     }
 }
 
-/**
- * Drag-to-reorder for a [LazyColumn] whose song items are keyed by track id. The
- * dragged row follows the finger through [dragOffset]; when its center crosses
- * another song row both swap, and the offset is corrected so the row stays under
- * the finger.
- */
-private class ReorderState(private val listState: LazyListState) {
+private val NON_TRACK_KEYS = setOf("form", "count", "delete")
 
-    var draggedKey: String? by mutableStateOf(null)
-        private set
-
-    var dragOffset: Float by mutableFloatStateOf(0f)
-        private set
-
-    fun start(key: String) {
-        draggedKey = key
-        dragOffset = 0f
-    }
-
-    fun stop() {
-        draggedKey = null
-        dragOffset = 0f
-    }
-
-    /** Returns true when the drag crossed into another row and [onSwap] was called. */
-    fun drag(deltaY: Float, onSwap: (fromKey: String, toKey: String) -> Unit): Boolean {
-        val key = draggedKey ?: return false
-        dragOffset += deltaY
-        val visibleItems = listState.layoutInfo.visibleItemsInfo
-        val dragged = visibleItems.firstOrNull { item -> item.key == key } ?: return false
-        val draggedCenter = dragged.offset + dragOffset + dragged.size / 2f
-        val target = visibleItems.firstOrNull { item ->
-            item.key != key &&
-                item.key is String &&
-                item.key !in NON_TRACK_KEYS &&
-                draggedCenter.toInt() in item.offset until item.offset + item.size
-        } ?: return false
-        onSwap(key, target.key as String)
-        dragOffset += dragged.offset - target.offset
-        return true
-    }
-
-    private companion object {
-        val NON_TRACK_KEYS = setOf("form", "count", "delete")
-    }
-}
-
-private const val DRAGGED_SCALE = 1.02f
 
 private val previewTracks = listOf(
     Track("1", "Midnight City", listOf(ArtistRef(null, "M83")), null, null, null),

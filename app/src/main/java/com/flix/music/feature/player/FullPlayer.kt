@@ -4,12 +4,12 @@ import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -83,6 +83,9 @@ data class FullPlayerActions(
     val onCycleRepeat: () -> Unit = {},
     val onRetry: () -> Unit = {},
     val onToggleFavorite: () -> Unit = {},
+    val onMore: () -> Unit = {},
+    val onOpenQueue: () -> Unit = {},
+    val onOpenLyrics: () -> Unit = {},
 )
 
 /**
@@ -120,7 +123,7 @@ fun FullPlayer(
             .windowInsetsPadding(WindowInsets.systemBars),
     ) {
         Column(Modifier.fillMaxSize()) {
-            PlayerTopBar(source = state.source, onCollapse = actions.onCollapse)
+            PlayerTopBar(source = state.source, onCollapse = actions.onCollapse, onMore = actions.onMore)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -167,20 +170,20 @@ fun FullPlayer(
                 )
                 PlayerControls(state = state, actions = actions)
             }
-            state.next?.let { nextTrack ->
-                UpNext(
-                    nextTrack = nextTrack,
-                    modifier = Modifier
-                        .padding(horizontal = FlixTheme.spacing.gutter)
-                        .padding(top = FlixTheme.spacing.lg, bottom = FlixTheme.spacing.lg),
-                )
-            }
+            UpNext(
+                nextTrack = state.next,
+                onOpenQueue = actions.onOpenQueue,
+                onOpenLyrics = actions.onOpenLyrics,
+                modifier = Modifier
+                    .padding(horizontal = FlixTheme.spacing.gutter)
+                    .padding(top = FlixTheme.spacing.lg, bottom = FlixTheme.spacing.lg),
+            )
         }
     }
 }
 
 @Composable
-private fun PlayerTopBar(source: PlaybackSource?, onCollapse: () -> Unit) {
+private fun PlayerTopBar(source: PlaybackSource?, onCollapse: () -> Unit, onMore: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -216,7 +219,13 @@ private fun PlayerTopBar(source: PlaybackSource?, onCollapse: () -> Unit) {
                 )
             }
         }
-        Spacer(Modifier.size(FlixTheme.spacing.touchMin))
+        IconButton(onClick = onMore) {
+            Icon(
+                painter = painterResource(R.drawable.ic_more_vert),
+                contentDescription = stringResource(R.string.action_more_options),
+                tint = FlixTheme.colors.textPrimary,
+            )
+        }
     }
 }
 
@@ -322,7 +331,7 @@ private fun ErrorBanner(canSkip: Boolean, onRetry: () -> Unit, onSkip: () -> Uni
 }
 
 @Composable
-private fun ElapsedAndRemaining(position: Duration, duration: Duration?, modifier: Modifier = Modifier) {
+internal fun ElapsedAndRemaining(position: Duration, duration: Duration?, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(position.toClock(), style = FlixTheme.typography.caption, color = FlixTheme.colors.textSecondary)
         Text(
@@ -423,20 +432,41 @@ private fun ModeToggle(
     }
 }
 
-/** "A continuación" strip (design `.peek`): the next track in the queue. */
+/**
+ * "A continuación" strip (design `.peek`): the next track plus the Letra and Cola
+ * buttons. It is the quick way to the Cola: tap it or swipe it up.
+ */
 @Composable
-private fun UpNext(nextTrack: Track, modifier: Modifier = Modifier) {
+private fun UpNext(
+    nextTrack: Track?,
+    onOpenQueue: () -> Unit,
+    onOpenLyrics: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val openThreshold = with(LocalDensity.current) { PEEK_SWIPE_THRESHOLD.toPx() }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(FlixTheme.shapes.md)
             .background(FlixTheme.colors.textPrimary.copy(alpha = PEEK_BACKGROUND_ALPHA))
-            .padding(horizontal = FlixTheme.spacing.md, vertical = FlixTheme.spacing.sm),
+            .clickable(onClickLabel = stringResource(R.string.queue_open), onClick = onOpenQueue)
+            .pointerInput(Unit) {
+                var dragDistance = 0f
+                detectVerticalDragGestures(
+                    onDragStart = { dragDistance = 0f },
+                    onVerticalDrag = { change, dragAmount ->
+                        change.consume()
+                        dragDistance += dragAmount
+                    },
+                    onDragEnd = { if (dragDistance < -openThreshold) onOpenQueue() },
+                )
+            }
+            .padding(start = FlixTheme.spacing.md, end = FlixTheme.spacing.xs, top = FlixTheme.spacing.sm, bottom = FlixTheme.spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(FlixTheme.spacing.md),
     ) {
         AsyncImage(
-            model = nextTrack.artworkUrl,
+            model = nextTrack?.artworkUrl,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -451,11 +481,25 @@ private fun UpNext(nextTrack: Track, modifier: Modifier = Modifier) {
                 color = FlixTheme.colors.textSecondary,
             )
             Text(
-                text = "${nextTrack.title} · ${nextTrack.artistNames}",
+                text = nextTrack?.let { "${it.title} · ${it.artistNames}" } ?: stringResource(R.string.queue_empty_title),
                 style = FlixTheme.typography.label,
                 color = FlixTheme.colors.textPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+            )
+        }
+        IconButton(onClick = onOpenLyrics) {
+            Icon(
+                painter = painterResource(R.drawable.ic_lyrics),
+                contentDescription = stringResource(R.string.lyrics_open),
+                tint = FlixTheme.colors.textSecondary,
+            )
+        }
+        IconButton(onClick = onOpenQueue) {
+            Icon(
+                painter = painterResource(R.drawable.ic_queue_music),
+                contentDescription = stringResource(R.string.queue_open),
+                tint = FlixTheme.colors.textSecondary,
             )
         }
     }
@@ -474,7 +518,8 @@ private val MODE_ICON_SIZE = 28.dp
 private val ACTIVE_DOT_RADIUS = 2.dp
 private val ACTIVE_DOT_BOTTOM = 6.dp
 private val BANNER_ICON_SIZE = 20.dp
-private val PEEK_ARTWORK_SIZE = 40.dp
+private val PEEK_ARTWORK_SIZE = 36.dp
+private val PEEK_SWIPE_THRESHOLD = 48.dp
 private val PLAYER_FAVORITE_ICON_SIZE = 28.dp
 private val COLLAPSE_DRAG_THRESHOLD = 120.dp
 

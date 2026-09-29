@@ -50,6 +50,16 @@ class FakePlayerController : PlayerController {
         queueRequests += track
     }
 
+    override fun skipToQueueItem(index: Int) = Unit
+
+    override fun removeQueueItem(index: Int) = Unit
+
+    override fun restoreQueueItem(index: Int, track: Track) = Unit
+
+    override fun moveQueueItem(fromIndex: Int, toIndex: Int) = Unit
+
+    override fun clearUpNext() = Unit
+
     override fun togglePlayPause() = Unit
 
     override fun seekTo(position: Duration) = Unit

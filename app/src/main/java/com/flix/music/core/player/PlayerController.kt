@@ -29,6 +29,19 @@ interface PlayerController {
     /** Appends [track] to the end of the queue, or plays it when nothing is queued. */
     fun addToQueue(track: Track)
 
+    /** Jumps to the queued track at [index] (Cola: tapping a row). */
+    fun skipToQueueItem(index: Int)
+
+    fun removeQueueItem(index: Int)
+
+    /** Puts [track] back at [index] ("Deshacer" after removing it from the queue). */
+    fun restoreQueueItem(index: Int, track: Track)
+
+    fun moveQueueItem(fromIndex: Int, toIndex: Int)
+
+    /** "Limpiar": removes everything except the current track. */
+    fun clearUpNext()
+
     fun togglePlayPause()
 
     fun seekTo(position: Duration)

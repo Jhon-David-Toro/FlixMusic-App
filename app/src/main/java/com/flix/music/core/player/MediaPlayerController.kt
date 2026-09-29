@@ -119,6 +119,35 @@ class MediaPlayerController @Inject constructor(
         mediaController.addMediaItem(insertIndex(mediaController), track.toMediaItem())
     }
 
+    override fun skipToQueueItem(index: Int) = withController { mediaController ->
+        if (index in 0 until mediaController.mediaItemCount) {
+            mediaController.seekTo(index, 0L)
+            mediaController.play()
+        }
+    }
+
+    override fun removeQueueItem(index: Int) = withController { mediaController ->
+        if (index in 0 until mediaController.mediaItemCount && index != mediaController.currentMediaItemIndex) {
+            mediaController.removeMediaItem(index)
+        }
+    }
+
+    override fun restoreQueueItem(index: Int, track: Track) = withController { mediaController ->
+        queuedTracks = queuedTracks + (track.id to track)
+        mediaController.addMediaItem(index.coerceIn(0, mediaController.mediaItemCount), track.toMediaItem())
+    }
+
+    override fun moveQueueItem(fromIndex: Int, toIndex: Int) = withController { mediaController ->
+        val indices = 0 until mediaController.mediaItemCount
+        if (fromIndex in indices && toIndex in indices) mediaController.moveMediaItem(fromIndex, toIndex)
+    }
+
+    override fun clearUpNext() = withController { mediaController ->
+        val currentIndex = mediaController.currentMediaItemIndex
+        mediaController.removeMediaItems(currentIndex + 1, mediaController.mediaItemCount)
+        mediaController.removeMediaItems(0, currentIndex)
+    }
+
     override fun togglePlayPause() = withController { mediaController ->
         when {
             mediaController.playbackState == Player.STATE_ENDED || mediaController.playerError != null -> retry()
@@ -238,6 +267,7 @@ class MediaPlayerController @Inject constructor(
             ),
             current = currentItem?.toTrack(queuedTracks),
             next = nextItem?.toTrack(queuedTracks),
+            upNext = upNextOf(player),
             source = source,
             position = player.currentPosition.coerceAtLeast(0L).milliseconds,
             bufferedPosition = player.bufferedPosition.coerceAtLeast(0L).milliseconds,
@@ -251,6 +281,19 @@ class MediaPlayerController @Inject constructor(
             hasPrevious = player.hasPreviousMediaItem(),
             hasNext = nextItem != null,
         )
+    }
+
+    /** Walks the timeline in play order from the current item, so shuffle is respected. */
+    private fun upNextOf(player: Player): List<QueueItem> {
+        val timeline = player.currentTimeline
+        if (timeline.isEmpty) return emptyList()
+        val upNext = mutableListOf<QueueItem>()
+        var index = timeline.getNextWindowIndex(player.currentMediaItemIndex, Player.REPEAT_MODE_OFF, player.shuffleModeEnabled)
+        while (index != C.INDEX_UNSET) {
+            upNext += QueueItem(index, player.getMediaItemAt(index).toTrack(queuedTracks))
+            index = timeline.getNextWindowIndex(index, Player.REPEAT_MODE_OFF, player.shuffleModeEnabled)
+        }
+        return upNext
     }
 
     /** Media3 has no position callback, so the position is polled while audio plays. */

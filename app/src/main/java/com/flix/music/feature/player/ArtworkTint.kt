@@ -28,10 +28,11 @@ import kotlinx.coroutines.withContext
  * Top color of the Full Player gradient, taken from the artwork (design: "Tinte = color
  * dominante del artwork, limitado en luminancia"). The dominant color is clamped to
  * L* ≤ 35 (dark) / ≥ 85 (light), then mixed with the background at 48 % / 22 %,
- * and animated on track changes (slow).
+ * and animated on track changes (slow). [amount] overrides the mix, e.g. the lighter
+ * 18 % of the Cola layer.
  */
 @Composable
-fun rememberArtworkTint(artworkUrl: String?): Color {
+fun rememberArtworkTint(artworkUrl: String?, amount: Float? = null): Color {
     val platformContext = LocalPlatformContext.current
     val isDark = FlixTheme.isDark
     val background = FlixTheme.colors.background
@@ -42,7 +43,7 @@ fun rememberArtworkTint(artworkUrl: String?): Color {
     }
 
     val target = dominantColor?.let { color ->
-        lerp(background, Color(color.clampLightness(isDark)), if (isDark) DARK_TINT_AMOUNT else LIGHT_TINT_AMOUNT)
+        lerp(background, Color(color.clampLightness(isDark)), amount ?: if (isDark) DARK_TINT_AMOUNT else LIGHT_TINT_AMOUNT)
     } ?: background
 
     val tint by animateColorAsState(target, tween(FlixMotion.SLOW, easing = FlixMotion.Standard), label = "artworkTint")

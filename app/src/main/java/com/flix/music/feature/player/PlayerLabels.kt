@@ -35,6 +35,16 @@ internal fun playbackSourceLabel(source: PlaybackSource): String = when (source)
     is PlaybackSource.Playlist -> source.name
 }
 
+/** Second half of the Cola header: "A continuación · de tu búsqueda". */
+@Composable
+internal fun queueSourceSuffix(source: PlaybackSource): String = when (source) {
+    is PlaybackSource.Search -> stringResource(R.string.queue_from_search)
+    is PlaybackSource.Genre -> stringResource(R.string.queue_from_named, source.name)
+    PlaybackSource.Favorites -> stringResource(R.string.queue_from_favorites)
+    PlaybackSource.History -> stringResource(R.string.queue_from_history)
+    is PlaybackSource.Playlist -> stringResource(R.string.queue_from_named, source.name)
+}
+
 @StringRes
 internal fun RepeatMode.label(): Int = when (this) {
     RepeatMode.Off -> R.string.player_repeat_off

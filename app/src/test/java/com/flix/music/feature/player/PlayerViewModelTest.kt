@@ -44,4 +44,16 @@ class PlayerViewModelTest {
         advanceUntilIdle()
         assertEquals(false, viewModel.isCurrentFavorite.value)
     }
+
+    @Test
+    fun `cerrar el reproductor desde la cola vuelve a abrirlo en el player`() {
+        viewModel.expand()
+        viewModel.openQueue()
+        assertEquals(PlayerLayer.Queue, viewModel.layer)
+
+        viewModel.collapse()
+        viewModel.expand()
+
+        assertEquals(PlayerLayer.NowPlaying, viewModel.layer)
+    }
 }

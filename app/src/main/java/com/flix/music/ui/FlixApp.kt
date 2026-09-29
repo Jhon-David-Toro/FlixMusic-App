@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
@@ -45,10 +46,16 @@ import com.flix.music.core.designsystem.theme.FlixMotion
 import com.flix.music.core.designsystem.theme.FlixTheme
 import com.flix.music.core.player.PlaybackStatus
 import com.flix.music.core.player.PlayerEvent
+import com.flix.music.core.ui.LocalTrackMenu
+import com.flix.music.core.ui.open
 import com.flix.music.feature.player.FullPlayer
 import com.flix.music.feature.player.FullPlayerActions
+import com.flix.music.feature.player.LyricsScreen
 import com.flix.music.feature.player.MiniPlayer
+import com.flix.music.feature.player.PlayerLayer
 import com.flix.music.feature.player.PlayerViewModel
+import com.flix.music.feature.player.QueueActions
+import com.flix.music.feature.player.QueueScreen
 import com.flix.music.feature.trackmenu.TrackMenuHost
 import com.flix.music.navigation.FlixNavHost
 import com.flix.music.navigation.TopLevelDestination
@@ -85,6 +92,22 @@ fun FlixApp(playerViewModel: PlayerViewModel = hiltViewModel()) {
             onCycleRepeat = playerViewModel::onCycleRepeat,
             onRetry = playerViewModel::onRetry,
             onToggleFavorite = playerViewModel::onToggleFavorite,
+            onOpenQueue = playerViewModel::openQueue,
+            onOpenLyrics = playerViewModel::openLyrics,
+        )
+    }
+    val queueActions = remember(playerViewModel, navController) {
+        QueueActions(
+            onClose = playerViewModel::closeLayer,
+            onItemClick = playerViewModel::onQueueItemClick,
+            onRemove = playerViewModel::onRemoveQueueItem,
+            onRestore = playerViewModel::onRestoreQueueItem,
+            onMove = playerViewModel::onMoveQueueItem,
+            onClear = playerViewModel::onClearQueue,
+            onBrowseMusic = {
+                playerViewModel.collapse()
+                navController.navigateToTopLevel(TopLevelDestination.Search)
+            },
         )
     }
 
@@ -97,7 +120,9 @@ fun FlixApp(playerViewModel: PlayerViewModel = hiltViewModel()) {
         }
     }
 
-    BackHandler(enabled = isExpanded) { playerViewModel.collapse() }
+    BackHandler(enabled = isExpanded) {
+        if (playerViewModel.layer == PlayerLayer.NowPlaying) playerViewModel.collapse() else playerViewModel.closeLayer()
+    }
 
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
         TrackMenuHost(onOpenPlaylist = navController::openPlaylistInLibrary) {
@@ -150,18 +175,47 @@ fun FlixApp(playerViewModel: PlayerViewModel = hiltViewModel()) {
                             fullHeight / PLAYER_SLIDE_DIVISOR
                         },
                 ) {
-                    FullPlayer(
-                        state = playerState,
-                        actions = fullPlayerActions,
-                        isFavorite = isCurrentFavorite,
-                        artworkModifier = Modifier.sharedElement(
-                            rememberSharedContentState(PLAYER_ARTWORK_KEY),
-                            animatedVisibilityScope = this@AnimatedVisibility,
-                        ),
-                    )
+                    val trackMenu = LocalTrackMenu.current
+                    Box {
+                        FullPlayer(
+                            state = playerState,
+                            actions = fullPlayerActions.copy(
+                                onMore = { playerState.current?.let { track -> trackMenu.open(track) } },
+                            ),
+                            isFavorite = isCurrentFavorite,
+                            artworkModifier = Modifier.sharedElement(
+                                rememberSharedContentState(PLAYER_ARTWORK_KEY),
+                                animatedVisibilityScope = this@AnimatedVisibility,
+                            ),
+                        )
+                        PlayerLayerVisibility(visible = playerViewModel.layer == PlayerLayer.Queue) {
+                            QueueScreen(state = playerState, actions = queueActions)
+                        }
+                        PlayerLayerVisibility(visible = playerViewModel.layer == PlayerLayer.Lyrics) {
+                            LyricsScreen(
+                                state = playerState,
+                                actions = fullPlayerActions,
+                                onClose = playerViewModel::closeLayer,
+                            )
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+/** Cola and Letra slide up from the bottom over the Full Player (design Navigation). */
+@Composable
+private fun PlayerLayerVisibility(visible: Boolean, content: @Composable () -> Unit) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(FlixMotion.NORMAL, easing = FlixMotion.Decelerate)) +
+            slideInVertically(tween(FlixMotion.NORMAL, easing = FlixMotion.Decelerate)) { fullHeight -> fullHeight },
+        exit = fadeOut(tween(FlixMotion.NORMAL, easing = FlixMotion.Accelerate)) +
+            slideOutVertically(tween(FlixMotion.NORMAL, easing = FlixMotion.Accelerate)) { fullHeight -> fullHeight },
+    ) {
+        content()
     }
 }
 

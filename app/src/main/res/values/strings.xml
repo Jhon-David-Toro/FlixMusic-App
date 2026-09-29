@@ -191,4 +191,21 @@
         <item quantity="one">Playlist · %1$d canción</item>
         <item quantity="other">Playlist · %1$d canciones</item>
     </plurals>
+    <string name="queue_title">Cola</string>
+    <string name="queue_open">Abrir la cola</string>
+    <string name="queue_close">Volver al reproductor</string>
+    <string name="queue_clear">Limpiar</string>
+    <string name="queue_now_playing">Ahora suena</string>
+    <string name="queue_from_search">de tu búsqueda</string>
+    <string name="queue_from_favorites">de tus favoritos</string>
+    <string name="queue_from_history">de tu historial</string>
+    <string name="queue_from_named">de %1$s</string>
+    <string name="queue_remove">Quitar de la cola</string>
+    <string name="queue_track_removed">Quitada de la cola</string>
+    <string name="queue_empty_title">No hay nada a continuación</string>
+    <string name="queue_empty_body">Usa “Añadir a la cola” en cualquier canción o reproduce un álbum.</string>
+    <string name="lyrics_open">Ver letra</string>
+    <string name="lyrics_close">Volver al reproductor</string>
+    <string name="lyrics_unavailable_title">Letra no disponible</string>
+    <string name="lyrics_unavailable_body">Todavía no tenemos la letra de esta canción.</string>
 </resources>
