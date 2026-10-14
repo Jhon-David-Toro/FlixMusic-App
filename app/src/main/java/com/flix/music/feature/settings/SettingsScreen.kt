@@ -68,8 +68,8 @@ fun SettingsScreen(
 }
 
 /**
- * Ajustes (design `settings`). Features the design marks as coming later (autoplay,
- * crossfade, audio quality, notifications) are shown disabled with "Próximamente".
+ * Ajustes (design `settings`). Autoplay, which the design marks as coming later, is
+ * shown disabled with "Próximamente".
  */
 @Composable
 fun SettingsContent(
@@ -123,20 +123,6 @@ fun SettingsContent(
                         onCheckedChange = actions.onRememberPlaybackModesChange,
                     )
                 }
-                SettingsRow(
-                    title = stringResource(R.string.settings_crossfade),
-                    subtitle = stringResource(R.string.settings_crossfade_body),
-                    enabled = false,
-                ) { SoonTag() }
-                SettingsRow(
-                    title = stringResource(R.string.settings_audio_quality),
-                    subtitle = stringResource(R.string.settings_audio_quality_automatic),
-                    enabled = false,
-                ) { SoonTag() }
-            }
-            item(key = "notifications") {
-                SettingsGroupTitle(stringResource(R.string.settings_notifications))
-                SettingsRow(title = stringResource(R.string.settings_new_music), enabled = false) { SoonTag() }
             }
             item(key = "data") {
                 SettingsGroupTitle(stringResource(R.string.settings_data))

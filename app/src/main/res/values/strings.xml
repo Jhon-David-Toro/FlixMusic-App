@@ -320,12 +320,6 @@
     <string name="settings_autoplay">Reproducción automática</string>
     <string name="settings_autoplay_body">Sigue con música parecida al acabar la cola</string>
     <string name="settings_remember_modes">Recordar aleatorio y repetir</string>
-    <string name="settings_crossfade">Crossfade</string>
-    <string name="settings_crossfade_body">Transición entre canciones</string>
-    <string name="settings_audio_quality">Calidad de audio</string>
-    <string name="settings_audio_quality_automatic">Automática</string>
-    <string name="settings_notifications">Notificaciones</string>
-    <string name="settings_new_music">Música nueva de artistas que sigues</string>
     <string name="settings_data">Datos</string>
     <string name="settings_clear_cache">Borrar caché</string>
     <string name="settings_cache_size">%1$s en imágenes y audio temporal</string>
