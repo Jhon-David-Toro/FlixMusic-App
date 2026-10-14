@@ -303,8 +303,6 @@
     <string name="stats_monthly_activity">Actividad mensual</string>
     <string name="stats_top_artists">Artistas más escuchados</string>
     <string name="stats_songs">Canciones</string>
-    <string name="stats_genres">Géneros</string>
-    <string name="stats_genres_soon">Próximamente: necesitamos el género de cada canción para calcularlo.</string>
     <string name="stats_empty_title">Sin escuchas en este periodo</string>
     <string name="stats_empty_body">Lo que escuches aparecerá aquí.</string>
     <string name="stats_bars_description">Minutos escuchados por día</string>

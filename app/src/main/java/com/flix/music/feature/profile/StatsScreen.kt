@@ -36,7 +36,6 @@ import com.flix.music.R
 import com.flix.music.core.designsystem.component.ActivityBars
 import com.flix.music.core.designsystem.component.FlixSegmentedControl
 import com.flix.music.core.designsystem.component.FlixTopAppBar
-import com.flix.music.core.designsystem.component.InfoBanner
 import com.flix.music.core.designsystem.component.SectionHeader
 import com.flix.music.core.designsystem.component.Segment
 import com.flix.music.core.designsystem.component.StateView
@@ -142,17 +141,6 @@ fun StatsContent(
                     share = trackPlays.plays.toFloat() / topPlays,
                     artworkUrl = trackPlays.track.artworkUrl,
                     circular = false,
-                )
-            }
-            item(key = "genres") {
-                SectionHeader(title = stringResource(R.string.stats_genres), modifier = Modifier.padding(top = SECTION_TOP))
-                InfoBanner(
-                    text = stringResource(R.string.stats_genres_soon),
-                    icon = R.drawable.ic_schedule,
-                    iconTint = FlixTheme.colors.textPrimary,
-                    modifier = Modifier
-                        .padding(horizontal = FlixTheme.spacing.gutter)
-                        .padding(top = FlixTheme.spacing.sm),
                 )
             }
         }
