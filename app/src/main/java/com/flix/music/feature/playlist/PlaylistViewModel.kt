@@ -3,6 +3,7 @@ package com.flix.music.feature.playlist
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.flix.music.core.data.repository.DownloadsRepository
 import com.flix.music.core.data.repository.PlaylistsRepository
 import com.flix.music.core.model.Playlist
 import com.flix.music.core.model.Track
@@ -29,12 +30,13 @@ sealed interface PlaylistUiState {
     data object Missing : PlaylistUiState
 }
 
-/** Playlist detail (design `playlist`): play, shuffle, play from a song, share and delete. */
+/** Playlist detail (design `playlist`): play, shuffle, play from a song, download, share and delete. */
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val playlistsRepository: PlaylistsRepository,
     private val playerController: PlayerController,
+    private val downloadsRepository: DownloadsRepository,
 ) : ViewModel() {
 
     /** Read by name instead of `toRoute()` so plain JVM tests can pass a [SavedStateHandle]. */
@@ -63,6 +65,8 @@ class PlaylistViewModel @Inject constructor(
         val startIndex = tracks().indexOfFirst { it.id == track.id }
         if (startIndex >= 0) playFrom(startIndex, shuffle = false)
     }
+
+    fun onDownload() = downloadsRepository.download(tracks())
 
     fun onDelete() {
         viewModelScope.launch { playlistsRepository.delete(playlistId) }

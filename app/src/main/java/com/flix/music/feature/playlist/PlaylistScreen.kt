@@ -74,6 +74,7 @@ data class PlaylistActions(
     val onTrackClick: (Track) -> Unit = {},
     val onTrackMore: (Track) -> Unit = {},
     val onShare: () -> Unit = {},
+    val onDownload: () -> Unit = {},
     val onDelete: () -> Unit = {},
 )
 
@@ -104,6 +105,7 @@ fun PlaylistScreen(
         onTrackClick = viewModel::onTrackClick,
         onTrackMore = { track -> trackMenu.open(track) },
         onShare = { playlist?.let(context::sharePlaylist) },
+        onDownload = viewModel::onDownload,
         onDelete = viewModel::onDelete,
     )
     PlaylistContent(
@@ -293,7 +295,7 @@ private fun PlaylistActionsRow(actions: PlaylistActions) {
     }
 }
 
-/** Playlist menu (design "Menú: Playlist"): Reproducir · Aleatorio · Editar, then Compartir and Eliminar. */
+/** Playlist menu (design "Menú: Playlist"): Reproducir · Aleatorio · Editar, then Descargar, Compartir and Eliminar. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PlaylistMenu(
@@ -330,6 +332,11 @@ private fun PlaylistMenu(
                 onClick = { closeThen(actions.onEdit) },
             )
         }
+        SheetRow(
+            icon = R.drawable.ic_download,
+            label = stringResource(R.string.playlist_download),
+            onClick = { closeThen(actions.onDownload) },
+        )
         SheetRow(
             icon = R.drawable.ic_share,
             label = stringResource(R.string.action_share),

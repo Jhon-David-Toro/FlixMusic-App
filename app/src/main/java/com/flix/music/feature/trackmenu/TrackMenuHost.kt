@@ -70,6 +70,7 @@ fun TrackMenuHost(
     }
     val detailNavigator = LocalDetailNavigator.current
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    val downloadIds by viewModel.downloadIds.collectAsStateWithLifecycle()
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val snackbarHostState = LocalSnackbarHostState.current
     val context = LocalContext.current
@@ -159,6 +160,29 @@ fun TrackMenuHost(
                     label = stringResource(R.string.add_to_playlist),
                     onClick = { closeThen { step = TrackMenuStep.PickPlaylist(track) } },
                 )
+                if (track.id in downloadIds) {
+                    SheetRow(
+                        icon = R.drawable.ic_download_done_filled,
+                        label = stringResource(R.string.download_remove),
+                        onClick = {
+                            closeThen {
+                                viewModel.onRemoveDownload(track)
+                                confirm(context.getString(R.string.download_removed))
+                            }
+                        },
+                    )
+                } else {
+                    SheetRow(
+                        icon = R.drawable.ic_download,
+                        label = stringResource(R.string.download),
+                        onClick = {
+                            closeThen {
+                                viewModel.onDownload(track)
+                                confirm(context.getString(R.string.download_started))
+                            }
+                        },
+                    )
+                }
                 track.artists.firstOrNull()?.let { artist ->
                     SheetRow(
                         icon = R.drawable.ic_person,

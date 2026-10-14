@@ -23,12 +23,19 @@ fun NavGraphBuilder.profileScreens(
     onOpenSettings: () -> Unit,
     onOpenStats: () -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenDownloads: () -> Unit,
 ) {
     composable<ProfileRoute>(
         enterTransition = { FlixTransitions.pushEnter() },
         popExitTransition = { FlixTransitions.pushExit() },
     ) {
-        ProfileScreen(onBack = onBack, onOpenSettings = onOpenSettings, onOpenStats = onOpenStats, onOpenHistory = onOpenHistory)
+        ProfileScreen(
+            onBack = onBack,
+            onOpenSettings = onOpenSettings,
+            onOpenStats = onOpenStats,
+            onOpenHistory = onOpenHistory,
+            onOpenDownloads = onOpenDownloads,
+        )
     }
     composable<StatsRoute>(
         enterTransition = { FlixTransitions.pushEnter() },

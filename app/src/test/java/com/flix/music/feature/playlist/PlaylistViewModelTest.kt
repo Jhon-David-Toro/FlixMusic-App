@@ -5,6 +5,7 @@ import com.flix.music.core.model.ArtistRef
 import com.flix.music.core.model.Playlist
 import com.flix.music.core.model.Track
 import com.flix.music.core.player.PlaybackSource
+import com.flix.music.testing.FakeDownloadsRepository
 import com.flix.music.testing.FakePlayerController
 import com.flix.music.testing.FakePlaylistsRepository
 import com.flix.music.testing.MainDispatcherRule
@@ -32,8 +33,9 @@ class PlaylistViewModelTest {
         listOf(Playlist(7, "Noches de ruta", null, listOf(midnightCity, killshot), Instant.EPOCH)),
     )
     private val playerController = FakePlayerController()
+    private val downloadsRepository = FakeDownloadsRepository()
     private val viewModel by lazy {
-        PlaylistViewModel(SavedStateHandle(mapOf("playlistId" to 7L)), repository, playerController)
+        PlaylistViewModel(SavedStateHandle(mapOf("playlistId" to 7L)), repository, playerController, downloadsRepository)
     }
 
     private fun TestScope.collectUiState() {
@@ -67,5 +69,15 @@ class PlaylistViewModelTest {
         advanceUntilIdle()
 
         assertEquals(PlaylistUiState.Missing, viewModel.uiState.value)
+    }
+
+    @Test
+    fun `descargar la playlist descarga todas sus canciones`() = runTest {
+        collectUiState()
+        advanceUntilIdle()
+
+        viewModel.onDownload()
+
+        assertEquals(setOf(midnightCity, killshot), downloadsRepository.current.map { download -> download.track }.toSet())
     }
 }

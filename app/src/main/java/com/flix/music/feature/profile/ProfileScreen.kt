@@ -43,7 +43,6 @@ import com.flix.music.core.designsystem.component.FlixTopAppBar
 import com.flix.music.core.designsystem.component.ProfileAvatar
 import com.flix.music.core.designsystem.component.SettingsChevron
 import com.flix.music.core.designsystem.component.SettingsRow
-import com.flix.music.core.designsystem.component.SoonTag
 import com.flix.music.core.designsystem.component.util.toReadableLength
 import com.flix.music.core.designsystem.theme.FlixPreview
 import com.flix.music.core.designsystem.theme.FlixTheme
@@ -63,6 +62,7 @@ data class ProfileActions(
     val onOpenSettings: () -> Unit = {},
     val onOpenStats: () -> Unit = {},
     val onOpenHistory: () -> Unit = {},
+    val onOpenDownloads: () -> Unit = {},
 )
 
 @Composable
@@ -71,13 +71,14 @@ fun ProfileScreen(
     onOpenSettings: () -> Unit,
     onOpenStats: () -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenDownloads: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ProfileContent(
         uiState = uiState,
-        actions = ProfileActions(onBack, onOpenSettings, onOpenStats, onOpenHistory),
+        actions = ProfileActions(onBack, onOpenSettings, onOpenStats, onOpenHistory, onOpenDownloads),
         modifier = modifier,
     )
 }
@@ -116,9 +117,11 @@ fun ProfileContent(uiState: ProfileUiState, actions: ProfileActions, modifier: M
                         icon = R.drawable.ic_history,
                         onClick = actions.onOpenHistory,
                     ) { SettingsChevron() }
-                    SettingsRow(title = stringResource(R.string.profile_downloads), icon = R.drawable.ic_download) {
-                        SoonTag()
-                    }
+                    SettingsRow(
+                        title = stringResource(R.string.profile_downloads),
+                        icon = R.drawable.ic_download,
+                        onClick = actions.onOpenDownloads,
+                    ) { SettingsChevron() }
                     SettingsRow(
                         title = stringResource(R.string.settings_title),
                         icon = R.drawable.ic_settings,

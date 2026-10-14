@@ -11,6 +11,7 @@ import kotlin.time.Duration.Companion.seconds
  * Snapshot of a [Track] embedded in library tables, so favorites and history render
  * offline without asking the server. Artists are stored as a JSON list.
  */
+@Serializable
 data class StoredTrack(
     val trackId: String,
     val title: String,

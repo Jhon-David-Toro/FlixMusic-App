@@ -2,6 +2,7 @@ package com.flix.music.feature.trackmenu
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.flix.music.core.data.repository.DownloadsRepository
 import com.flix.music.core.data.repository.FavoritesRepository
 import com.flix.music.core.data.repository.PlaylistsRepository
 import com.flix.music.core.model.Playlist
@@ -23,9 +24,15 @@ class TrackMenuViewModel @Inject constructor(
     private val favoritesRepository: FavoritesRepository,
     private val playlistsRepository: PlaylistsRepository,
     private val playerController: PlayerController,
+    private val downloadsRepository: DownloadsRepository,
 ) : ViewModel() {
 
     val favoriteIds: StateFlow<Set<String>> = favoritesRepository.favoriteIds
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), emptySet())
+
+    /** Songs downloaded or on their way, which the menu offers to remove instead. */
+    val downloadIds: StateFlow<Set<String>> = downloadsRepository.downloads
+        .map { downloads -> downloads.mapTo(HashSet()) { download -> download.track.id } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), emptySet())
 
     /** Most recently changed first, so the playlist you are building is on top. */
@@ -40,6 +47,10 @@ class TrackMenuViewModel @Inject constructor(
     fun onToggleFavorite(track: Track) {
         viewModelScope.launch { favoritesRepository.toggle(track) }
     }
+
+    fun onDownload(track: Track) = downloadsRepository.download(listOf(track))
+
+    fun onRemoveDownload(track: Track) = downloadsRepository.remove(track.id)
 
     /** Returns false when the playlist already had the song. */
     suspend fun addToPlaylist(playlist: Playlist, track: Track): Boolean =

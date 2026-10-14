@@ -18,6 +18,7 @@ sealed interface PlaybackSource {
     data class Genre(val name: String) : PlaybackSource
     data object Favorites : PlaybackSource
     data object History : PlaybackSource
+    data object Downloads : PlaybackSource
     data class Playlist(val name: String) : PlaybackSource
     data class Artist(val name: String) : PlaybackSource
     data class Album(val name: String) : PlaybackSource

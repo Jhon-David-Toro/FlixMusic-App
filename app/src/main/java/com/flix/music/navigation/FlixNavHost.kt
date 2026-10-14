@@ -9,6 +9,8 @@ import androidx.navigation.compose.NavHost
 import com.flix.music.core.designsystem.theme.FlixTransitions
 import com.flix.music.feature.album.navigation.albumScreen
 import com.flix.music.feature.artist.navigation.artistScreen
+import com.flix.music.feature.downloads.navigation.downloadsScreen
+import com.flix.music.feature.downloads.navigation.navigateToDownloads
 import com.flix.music.feature.favorites.navigation.favoritesScreen
 import com.flix.music.feature.favorites.navigation.navigateToFavorites
 import com.flix.music.feature.genre.navigation.genreScreen
@@ -83,7 +85,9 @@ fun FlixNavHost(
             onOpenSettings = navController::navigateToSettings,
             onOpenStats = navController::navigateToStats,
             onOpenHistory = { navController.openInLibrary { navigateToHistory() } },
+            onOpenDownloads = navController::navigateToDownloads,
         )
+        downloadsScreen(onBack = navController::popBackStack)
         settingsScreen(onBack = navController::popBackStack)
     }
 }

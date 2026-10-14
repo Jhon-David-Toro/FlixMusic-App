@@ -2,13 +2,13 @@ package com.flix.music.core.player
 
 import android.app.PendingIntent
 import android.content.Intent
-import androidx.core.net.toUri
+import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DataSpec
-import androidx.media3.datasource.ResolvingDataSource
-import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.LoadControl
@@ -16,34 +16,30 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.flix.music.MainActivity
-import com.flix.music.core.player.stream.StreamResolver
-import com.flix.music.core.player.stream.trackIdOfWatchUrl
 import dagger.hilt.android.AndroidEntryPoint
-import java.io.IOException
 import javax.inject.Inject
-import okhttp3.OkHttpClient
 
 /**
  * Owns the ExoPlayer and its [MediaSession], so music keeps playing with the screen
  * off and the system shows the media notification and lock-screen controls.
- * Each queue item points at the song's YouTube page; right before loading it, the
- * [StreamResolver] swaps that for a direct googlevideo URL resolved on the phone.
+ * Downloaded songs play from the phone; the rest stream from YouTube.
  */
+@OptIn(UnstableApi::class)
 @AndroidEntryPoint
 class PlaybackService : MediaSessionService() {
 
     @Inject
-    lateinit var okHttpClient: OkHttpClient
+    lateinit var youTubeDataSourceFactory: DataSource.Factory
 
     @Inject
-    lateinit var streamResolver: StreamResolver
+    lateinit var downloadCache: Cache
 
     private var mediaSession: MediaSession? = null
 
     override fun onCreate() {
         super.onCreate()
         val player = ExoPlayer.Builder(this)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(directStreamDataSourceFactory()))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(downloadsFirstDataSourceFactory()))
             .setLoadControl(wholeSongLoadControl())
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -92,24 +88,12 @@ class PlaybackService : MediaSessionService() {
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
-    private fun directStreamDataSourceFactory(): DataSource.Factory =
-        ResolvingDataSource.Factory(OkHttpDataSource.Factory(okHttpClient)) { dataSpec -> dataSpec.toDirectStream() }
-
-    /**
-     * Points a queue item's YouTube page at the phone-resolved stream. A request from
-     * the start with no end gets `Range: bytes=0-`, since googlevideo throttles requests
-     * without a Range to about 30 KB/s.
-     */
-    private fun DataSpec.toDirectStream(): DataSpec {
-        val trackId = trackIdOfWatchUrl(uri.toString()) ?: return this
-        val directUrl = streamResolver.resolve(trackId) ?: throw IOException("YouTube gave no audio for $trackId")
-        val direct = withUri(directUrl.toUri())
-        return if (position == 0L && length == C.LENGTH_UNSET.toLong()) {
-            direct.withAdditionalHeaders(mapOf(RANGE_HEADER to FULL_RANGE))
-        } else {
-            direct
-        }
-    }
+    /** Reads what was downloaded and streams the rest, without filling the downloads with plays. */
+    private fun downloadsFirstDataSourceFactory(): DataSource.Factory =
+        CacheDataSource.Factory()
+            .setCache(downloadCache)
+            .setUpstreamDataSourceFactory(youTubeDataSourceFactory)
+            .setCacheWriteDataSinkFactory(null)
 
     private fun openAppIntent(): PendingIntent =
         PendingIntent.getActivity(
@@ -120,8 +104,6 @@ class PlaybackService : MediaSessionService() {
         )
 
     private companion object {
-        const val RANGE_HEADER = "Range"
-        const val FULL_RANGE = "bytes=0-"
         const val MAX_BUFFER_MS = 15 * 60_000
         const val START_PLAYBACK_BUFFER_MS = 1_000
         const val RESUME_PLAYBACK_BUFFER_MS = 2_000

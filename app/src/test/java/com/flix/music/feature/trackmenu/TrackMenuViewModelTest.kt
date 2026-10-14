@@ -3,6 +3,7 @@ package com.flix.music.feature.trackmenu
 import com.flix.music.core.model.ArtistRef
 import com.flix.music.core.model.Playlist
 import com.flix.music.core.model.Track
+import com.flix.music.testing.FakeDownloadsRepository
 import com.flix.music.testing.FakeFavoritesRepository
 import com.flix.music.testing.FakePlayerController
 import com.flix.music.testing.FakePlaylistsRepository
@@ -27,7 +28,7 @@ class TrackMenuViewModelTest {
     private val playlistsRepository = FakePlaylistsRepository(listOf(nochesDeRuta))
     private val playerController = FakePlayerController()
     private val viewModel by lazy {
-        TrackMenuViewModel(FakeFavoritesRepository(), playlistsRepository, playerController)
+        TrackMenuViewModel(FakeFavoritesRepository(), playlistsRepository, playerController, FakeDownloadsRepository())
     }
 
     @Test

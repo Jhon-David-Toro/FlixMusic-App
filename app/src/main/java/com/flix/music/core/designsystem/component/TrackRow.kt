@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -59,6 +60,7 @@ fun TrackRow(
     onMoreClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     number: Int? = null,
+    subtitleColor: Color = FlixTheme.colors.textSecondary,
 ) {
     val haptics = LocalHapticFeedback.current
     val openMenu = onMoreClick ?: onLongClick
@@ -122,7 +124,7 @@ fun TrackRow(
             Text(
                 text = subtitle,
                 style = FlixTheme.typography.bodySmall,
-                color = FlixTheme.colors.textSecondary,
+                color = subtitleColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

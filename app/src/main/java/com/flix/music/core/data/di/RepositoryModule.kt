@@ -2,6 +2,8 @@ package com.flix.music.core.data.di
 
 import com.flix.music.core.data.repository.CacheRepository
 import com.flix.music.core.data.repository.CacheRepositoryImpl
+import com.flix.music.core.data.repository.DownloadsRepository
+import com.flix.music.core.data.repository.DownloadsRepositoryImpl
 import com.flix.music.core.data.repository.FavoritesRepository
 import com.flix.music.core.data.repository.FavoritesRepositoryImpl
 import com.flix.music.core.data.repository.FollowedArtistsRepository
@@ -70,6 +72,10 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindCacheRepository(impl: CacheRepositoryImpl): CacheRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDownloadsRepository(impl: DownloadsRepositoryImpl): DownloadsRepository
 
     @Binds
     @Singleton
