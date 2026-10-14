@@ -1,5 +1,6 @@
 package com.flix.music.core.data.youtube
 
+import android.util.Log
 import okhttp3.OkHttpClient
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.Localization
@@ -29,9 +30,11 @@ class NewPipeSetup @Inject constructor(private val okHttpClient: OkHttpClient) {
     fun warmUp() {
         ensureInitialized()
         runCatching { YoutubeJavaScriptPlayerManager.getSignatureTimestamp(WARM_UP_VIDEO_ID) }
+            .onFailure { failure -> Log.w(TAG, "NewPipe warm-up failed: ${failure.message}") }
     }
 
     private companion object {
+        const val TAG = "NewPipeSetup"
         const val LANGUAGE = "en"
         const val COUNTRY = "US"
         const val WARM_UP_VIDEO_ID = "dQw4w9WgXcQ"
