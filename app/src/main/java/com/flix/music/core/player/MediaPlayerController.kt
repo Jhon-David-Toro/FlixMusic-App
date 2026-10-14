@@ -9,7 +9,6 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.flix.music.core.data.repository.HistoryRepository
-import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.data.repository.SettingsRepository
 import com.flix.music.core.model.PlaybackModes
 import com.flix.music.core.model.Track
@@ -48,16 +47,14 @@ import kotlinx.coroutines.suspendCancellableCoroutine
  * fails again it is skipped with a [PlayerEvent.TrackSkipped] snackbar, and the last
  * track of the queue stays in [PlaybackStatus.Error] with a retry action; the retry
  * drops the track's phone-resolved URL so a rejected one is resolved again.
- * The next track is resolved ahead on the phone (or warmed through the server's
- * `/stream` when that fails) so skips start instantly, and every track is added to
- * the history the first time it actually plays.
+ * The next track's audio is resolved ahead on the phone so skips start instantly,
+ * and every track is added to the history the first time it actually plays.
  * Shuffle and repeat are saved when they change and restored on start when the user
  * turned on "Recordar aleatorio y repetir".
  */
 @Singleton
 class MediaPlayerController @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val repository: MusicRepository,
     private val historyRepository: HistoryRepository,
     private val settingsRepository: SettingsRepository,
     private val streamResolver: StreamResolver,
@@ -283,7 +280,7 @@ class MediaPlayerController @Inject constructor(
         if (!mediaController.hasNextMediaItem()) return
         val nextTrackId = mediaController.getMediaItemAt(mediaController.nextMediaItemIndex).mediaId
         scope.launch(Dispatchers.IO) {
-            if (streamResolver.resolve(nextTrackId) == null) runCatching { repository.prefetch(nextTrackId) }
+            streamResolver.resolve(nextTrackId)
         }
     }
 

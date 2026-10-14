@@ -1,18 +1,16 @@
 package com.flix.music.core.player.stream
 
 import android.util.Log
-import okhttp3.OkHttpClient
-import org.schabi.newpipe.extractor.MediaFormat
-import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.ServiceList
-import org.schabi.newpipe.extractor.localization.Localization
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.DeliveryMethod
-import org.schabi.newpipe.extractor.stream.StreamInfo
+import com.flix.music.core.data.youtube.NewPipeSetup
 import java.time.Clock
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
+import org.schabi.newpipe.extractor.MediaFormat
+import org.schabi.newpipe.extractor.ServiceList
+import org.schabi.newpipe.extractor.stream.AudioStream
+import org.schabi.newpipe.extractor.stream.DeliveryMethod
+import org.schabi.newpipe.extractor.stream.StreamInfo
 
 /**
  * [StreamResolver] backed by NewPipeExtractor, the same approach as NewPipe and
@@ -22,18 +20,13 @@ import javax.inject.Singleton
  */
 @Singleton
 class NewPipeStreamResolver @Inject constructor(
-    private val okHttpClient: OkHttpClient,
+    private val newPipeSetup: NewPipeSetup,
     private val clock: Clock,
 ) : StreamResolver {
 
     private class CachedStream(val url: String, val expiresAtMillis: Long)
 
     private val cache = ConcurrentHashMap<String, CachedStream>()
-
-    /** NewPipe is configured once, on the first resolve, off the main thread. */
-    private val newPipeSetup = lazy {
-        NewPipe.init(NewPipeDownloader(okHttpClient), Localization(LANGUAGE, COUNTRY))
-    }
 
     override fun resolve(trackId: String): String? {
         val now = clock.millis()
@@ -51,8 +44,8 @@ class NewPipeStreamResolver @Inject constructor(
     }
 
     private fun extract(trackId: String): String? {
-        newPipeSetup.value
-        val info = StreamInfo.getInfo(ServiceList.YouTube, YOUTUBE_WATCH_URL + trackId)
+        newPipeSetup.ensureInitialized()
+        val info = StreamInfo.getInfo(ServiceList.YouTube, youTubeWatchUrl(trackId))
         val progressive = info.audioStreams.filter { stream -> stream.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP }
         val preferred = progressive.filter { stream -> stream.format == MediaFormat.M4A }.ifEmpty { progressive }
         return preferred.maxByOrNull(AudioStream::getAverageBitrate)?.content
@@ -60,8 +53,5 @@ class NewPipeStreamResolver @Inject constructor(
 
     private companion object {
         const val TAG = "NewPipeStreamResolver"
-        const val YOUTUBE_WATCH_URL = "https://www.youtube.com/watch?v="
-        const val LANGUAGE = "en"
-        const val COUNTRY = "US"
     }
 }

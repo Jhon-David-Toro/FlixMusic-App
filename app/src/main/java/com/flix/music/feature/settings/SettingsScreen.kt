@@ -42,7 +42,6 @@ data class SettingsActions(
     val onBack: () -> Unit = {},
     val onThemeChange: (AppTheme) -> Unit = {},
     val onRememberPlaybackModesChange: (Boolean) -> Unit = {},
-    val onCheckServer: () -> Unit = {},
     val onClearHistory: () -> Unit = {},
     val onClearCache: () -> Unit = {},
 )
@@ -56,13 +55,11 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsContent(
         uiState = uiState,
-        serverAddress = viewModel.serverAddress,
         version = viewModel.version,
         actions = SettingsActions(
             onBack = onBack,
             onThemeChange = viewModel::onThemeChange,
             onRememberPlaybackModesChange = viewModel::onRememberPlaybackModesChange,
-            onCheckServer = viewModel::onCheckServer,
             onClearHistory = viewModel::onClearHistory,
             onClearCache = viewModel::onClearCache,
         ),
@@ -77,7 +74,6 @@ fun SettingsScreen(
 @Composable
 fun SettingsContent(
     uiState: SettingsUiState,
-    serverAddress: String,
     version: String,
     actions: SettingsActions,
     modifier: Modifier = Modifier,
@@ -137,19 +133,6 @@ fun SettingsContent(
                     subtitle = stringResource(R.string.settings_audio_quality_automatic),
                     enabled = false,
                 ) { SoonTag() }
-            }
-            item(key = "server") {
-                SettingsGroupTitle(stringResource(R.string.settings_server))
-                SettingsRow(
-                    title = serverAddress,
-                    subtitle = stringResource(uiState.serverStatus.label()),
-                    subtitleColor = when (uiState.serverStatus) {
-                        ServerStatus.Connected -> FlixTheme.colors.success
-                        ServerStatus.Unreachable -> FlixTheme.colors.error
-                        ServerStatus.Checking -> FlixTheme.colors.textSecondary
-                    },
-                    onClick = actions.onCheckServer,
-                )
             }
             item(key = "notifications") {
                 SettingsGroupTitle(stringResource(R.string.settings_notifications))
@@ -213,19 +196,12 @@ private fun FlixSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     )
 }
 
-private fun ServerStatus.label(): Int = when (this) {
-    ServerStatus.Checking -> R.string.settings_server_checking
-    ServerStatus.Connected -> R.string.settings_server_connected
-    ServerStatus.Unreachable -> R.string.settings_server_unreachable
-}
-
 @Preview(name = "Ajustes", widthDp = 360, heightDp = 1000)
 @Composable
 private fun SettingsPreview() {
     FlixPreview {
         SettingsContent(
-            uiState = SettingsUiState(UserSettings(theme = AppTheme.Dark), ServerStatus.Connected, 142_000_000),
-            serverAddress = "192.168.1.20:8000",
+            uiState = SettingsUiState(UserSettings(theme = AppTheme.Dark), 142_000_000),
             version = "1.0 (1)",
             actions = SettingsActions(),
         )

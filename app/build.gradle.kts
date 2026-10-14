@@ -1,13 +1,3 @@
-import java.util.Properties
-
-val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) file.inputStream().use { load(it) }
-}
-
-val serverUrl: String = localProperties.getProperty("flix.serverUrl", "http://10.0.2.2:8000/")
-val serverApiKey: String = localProperties.getProperty("flix.apiKey", "")
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -29,8 +19,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "SERVER_URL", "\"$serverUrl\"")
-        buildConfigField("String", "SERVER_API_KEY", "\"$serverApiKey\"")
     }
 
     buildTypes {
@@ -74,8 +62,6 @@ dependencies {
     implementation(libs.newpipe.extractor)
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
     implementation(libs.androidx.palette.ktx)
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.kotlinx.serialization)
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.navigation.compose)

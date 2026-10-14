@@ -4,19 +4,18 @@ import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
-import com.flix.music.BuildConfig
 import com.flix.music.core.model.ArtistRef
 import com.flix.music.core.model.Track
+import com.flix.music.core.player.stream.youTubeWatchUrl
 
 /**
- * Builds the queue item for [this] track. Its URI is the backend's `/audio` proxy;
- * [PlaybackService] replaces it with a stream resolved on the phone and keeps the
- * server as the fallback.
+ * Builds the queue item for [this] track. Its URI is the song's YouTube page;
+ * [PlaybackService] replaces it with the audio stream resolved on the phone.
  */
 internal fun Track.toMediaItem(): MediaItem =
     MediaItem.Builder()
         .setMediaId(id)
-        .setUri("${BuildConfig.SERVER_URL}api/music/songs/$id/audio")
+        .setUri(youTubeWatchUrl(id))
         .setMimeType(MimeTypes.AUDIO_MP4)
         .setMediaMetadata(
             MediaMetadata.Builder()

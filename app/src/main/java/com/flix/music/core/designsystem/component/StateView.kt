@@ -92,9 +92,9 @@ fun StateView(
 }
 
 /**
- * Error with "Reintentar" (design "Errores"). No connection adds "Ir a Biblioteca" and an
- * unreachable server adds "Revisar servidor"; both retry by themselves when the phone
- * comes back online (design: "se reintenta lo que falló").
+ * Error with "Reintentar" (design "Errores"). No connection adds "Ir a Biblioteca", and
+ * the screen retries by itself when the phone comes back online (design: "se reintenta
+ * lo que falló").
  */
 @Composable
 fun ErrorStateView(
@@ -117,7 +117,6 @@ fun ErrorStateView(
     val secondary: Pair<Int, () -> Unit>? = when {
         shortcuts == null -> null
         error == FlixError.NoConnection -> R.string.action_go_to_library to shortcuts.openLibrary
-        error == FlixError.ServerUnreachable -> R.string.action_check_server to shortcuts.openServerSettings
         else -> null
     }
     StateView(
@@ -135,8 +134,6 @@ fun ErrorStateView(
 private fun FlixError.toCopy(): Triple<Int, Int, Int> = when (this) {
     FlixError.NoConnection ->
         Triple(R.drawable.ic_cloud_off, R.string.error_no_connection_title, R.string.error_no_connection_body)
-    FlixError.ServerUnreachable ->
-        Triple(R.drawable.ic_dns, R.string.error_server_title, R.string.error_server_body)
     FlixError.Timeout ->
         Triple(R.drawable.ic_cloud_off, R.string.error_timeout_title, R.string.error_timeout_body)
     FlixError.Upstream ->

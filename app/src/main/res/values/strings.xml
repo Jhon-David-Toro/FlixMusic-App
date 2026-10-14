@@ -122,8 +122,6 @@
     <string name="action_retry">Reintentar</string>
     <string name="error_no_connection_title">Sin conexión</string>
     <string name="error_no_connection_body">Comprueba tu conexión e inténtalo nuevamente. Tu biblioteca sigue disponible.</string>
-    <string name="error_server_title">No encontramos tu servidor Flix</string>
-    <string name="error_server_body">Comprueba que esté encendido y en la misma red que este teléfono.</string>
     <string name="error_timeout_title">Está tardando demasiado</string>
     <string name="error_timeout_body">El servidor no respondió a tiempo. Vuelve a intentarlo en unos segundos.</string>
     <string name="error_upstream_title">El catálogo no responde ahora</string>
@@ -304,10 +302,6 @@
     <string name="settings_crossfade_body">Transición entre canciones</string>
     <string name="settings_audio_quality">Calidad de audio</string>
     <string name="settings_audio_quality_automatic">Automática</string>
-    <string name="settings_server">Servidor</string>
-    <string name="settings_server_checking">Comprobando…</string>
-    <string name="settings_server_connected">● Conectado</string>
-    <string name="settings_server_unreachable">● Sin conexión · toca para reintentar</string>
     <string name="settings_notifications">Notificaciones</string>
     <string name="settings_new_music">Música nueva de artistas que sigues</string>
     <string name="settings_data">Datos</string>
@@ -339,7 +333,6 @@
         <item quantity="other">≈ %1$s al día · %2$d canciones</item>
     </plurals>
     <string name="action_go_to_library">Ir a Biblioteca</string>
-    <string name="action_check_server">Revisar servidor</string>
     <string name="connectivity_offline">Sin conexión. Tu biblioteca sigue disponible.</string>
     <string name="connectivity_back">Conectado de nuevo</string>
     <string name="onboarding_skip">Omitir</string>

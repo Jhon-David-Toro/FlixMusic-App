@@ -2,7 +2,6 @@ package com.flix.music.core.model
 
 enum class FlixError {
     NoConnection,
-    ServerUnreachable,
     Timeout,
     Upstream,
     Unknown

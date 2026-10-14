@@ -3,7 +3,10 @@ package com.flix.music.core.data.repository
 import com.flix.music.core.model.SongDetails
 import com.flix.music.core.model.Track
 
-/** Music catalog from the backend. Every failure is thrown as a `FlixException`. */
+/**
+ * Music catalog, read from YouTube Music directly on the phone (no backend).
+ * Every failure is thrown as a `FlixException`.
+ */
 interface MusicRepository {
 
     suspend fun search(query: String): List<Track>
@@ -12,10 +15,4 @@ interface MusicRepository {
     fun cachedTrack(trackId: String): Track?
 
     suspend fun song(trackId: String): SongDetails
-
-    /** Whether the Flix server answers `/health` (Ajustes → Servidor). */
-    suspend fun isServerReachable(): Boolean
-
-    /** Warms the server cache for [trackId] so its audio starts instantly when played. */
-    suspend fun prefetch(trackId: String)
 }

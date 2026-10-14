@@ -7,14 +7,17 @@ import org.junit.Test
 class StreamUrlsTest {
 
     @Test
-    fun `reconoce el id en la URL de audio del servidor`() {
-        assertEquals("9HZ_tx8aWuA", trackIdOfServerAudio("https://flixmusic.doxel.dev/api/music/songs/9HZ_tx8aWuA/audio"))
+    fun `la URL de la canción y su id van y vuelven`() {
+        val url = youTubeWatchUrl("9HZ_tx8aWuA")
+
+        assertEquals("https://www.youtube.com/watch?v=9HZ_tx8aWuA", url)
+        assertEquals("9HZ_tx8aWuA", trackIdOfWatchUrl(url))
     }
 
     @Test
-    fun `no toca otras URLs, como las de googlevideo o las carátulas`() {
-        assertNull(trackIdOfServerAudio("https://rr2---sn-x.googlevideo.com/videoplayback?id=abc&expire=1"))
-        assertNull(trackIdOfServerAudio("https://flixmusic.doxel.dev/api/music/songs/9HZ_tx8aWuA/stream"))
+    fun `no toca las URLs de audio ya resueltas`() {
+        assertNull(trackIdOfWatchUrl("https://rr2---sn-x.googlevideo.com/videoplayback?id=abc&expire=1"))
+        assertNull(trackIdOfWatchUrl("https://www.youtube.com/watch?v=9HZ_tx8aWuA&list=PL1"))
     }
 
     @Test

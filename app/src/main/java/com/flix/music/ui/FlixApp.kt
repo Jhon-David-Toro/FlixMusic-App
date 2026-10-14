@@ -75,7 +75,6 @@ import com.flix.music.feature.player.PlayerLayer
 import com.flix.music.feature.player.PlayerViewModel
 import com.flix.music.feature.player.QueueActions
 import com.flix.music.feature.player.QueueScreen
-import com.flix.music.feature.settings.navigation.navigateToSettings
 import com.flix.music.feature.song.navigation.navigateToSong
 import com.flix.music.feature.trackmenu.TrackMenuHost
 import com.flix.music.navigation.FlixNavHost
@@ -190,7 +189,6 @@ fun FlixApp(
     val errorShortcuts = remember(navController) {
         ErrorShortcuts(
             openLibrary = { navController.navigateToTopLevel(TopLevelDestination.Library) },
-            openServerSettings = navController::navigateToSettings,
         )
     }
 

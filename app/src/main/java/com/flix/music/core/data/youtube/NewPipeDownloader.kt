@@ -1,4 +1,4 @@
-package com.flix.music.core.player.stream
+package com.flix.music.core.data.youtube
 
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody

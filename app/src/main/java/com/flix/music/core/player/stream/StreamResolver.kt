@@ -8,9 +8,8 @@ package com.flix.music.core.player.stream
 interface StreamResolver {
 
     /**
-     * The direct audio URL, or null when it cannot be resolved here; the caller then
-     * falls back to the server. Blocking, about 1–3 s the first time, cached until
-     * the URL expires.
+     * The direct audio URL, or null when YouTube would not give one. Blocking, about
+     * 1–3 s the first time, cached until the URL expires.
      */
     fun resolve(trackId: String): String?
 

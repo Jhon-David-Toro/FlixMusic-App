@@ -15,17 +15,17 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.flix.music.MainActivity
 import com.flix.music.core.player.stream.StreamResolver
-import com.flix.music.core.player.stream.trackIdOfServerAudio
+import com.flix.music.core.player.stream.trackIdOfWatchUrl
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.IOException
 import javax.inject.Inject
 import okhttp3.OkHttpClient
 
 /**
  * Owns the ExoPlayer and its [MediaSession], so music keeps playing with the screen
  * off and the system shows the media notification and lock-screen controls.
- * Each queue item points at the server's `/audio`; right before loading it, the
- * [StreamResolver] swaps that for a direct googlevideo URL resolved on the phone,
- * and the server stays as the fallback when that fails.
+ * Each queue item points at the song's YouTube page; right before loading it, the
+ * [StreamResolver] swaps that for a direct googlevideo URL resolved on the phone.
  */
 @AndroidEntryPoint
 class PlaybackService : MediaSessionService() {
@@ -81,13 +81,13 @@ class PlaybackService : MediaSessionService() {
         ResolvingDataSource.Factory(OkHttpDataSource.Factory(okHttpClient)) { dataSpec -> dataSpec.toDirectStream() }
 
     /**
-     * Points a server `/audio` request at the phone-resolved stream. A request from the
-     * start with no end gets `Range: bytes=0-`, since googlevideo throttles requests
+     * Points a queue item's YouTube page at the phone-resolved stream. A request from
+     * the start with no end gets `Range: bytes=0-`, since googlevideo throttles requests
      * without a Range to about 30 KB/s.
      */
     private fun DataSpec.toDirectStream(): DataSpec {
-        val trackId = trackIdOfServerAudio(uri.toString()) ?: return this
-        val directUrl = streamResolver.resolve(trackId) ?: return this
+        val trackId = trackIdOfWatchUrl(uri.toString()) ?: return this
+        val directUrl = streamResolver.resolve(trackId) ?: throw IOException("YouTube gave no audio for $trackId")
         val direct = withUri(directUrl.toUri())
         return if (position == 0L && length == C.LENGTH_UNSET.toLong()) {
             direct.withAdditionalHeaders(mapOf(RANGE_HEADER to FULL_RANGE))

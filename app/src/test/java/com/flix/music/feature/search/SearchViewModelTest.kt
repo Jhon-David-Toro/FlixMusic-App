@@ -110,17 +110,17 @@ class SearchViewModelTest {
 
     @Test
     fun `si el repository falla muestra el error`() = runTest {
-        repository.error = FlixError.ServerUnreachable
+        repository.error = FlixError.NoConnection
 
         viewModel.onQueryChange("fade")
         advanceUntilIdle()
 
-        assertEquals(SearchUiState.Error(FlixError.ServerUnreachable), viewModel.uiState.value)
+        assertEquals(SearchUiState.Error(FlixError.NoConnection), viewModel.uiState.value)
     }
 
     @Test
     fun `reintentar después de un error muestra los resultados`() = runTest {
-        repository.error = FlixError.ServerUnreachable
+        repository.error = FlixError.NoConnection
         viewModel.onQueryChange("fade")
         advanceUntilIdle()
 
