@@ -74,7 +74,7 @@ fun FavoritesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val sortOrder by viewModel.currentSortOrder.collectAsStateWithLifecycle()
-    val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val actions = remember(viewModel, onBack, onBrowseMusic) {
         FavoritesActions(
             onBack = onBack,
@@ -92,7 +92,7 @@ fun FavoritesScreen(
         uiState = uiState,
         query = viewModel.query,
         sortOrder = sortOrder,
-        nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
+        nowPlaying = nowPlaying,
         actions = actions,
         modifier = modifier,
     )

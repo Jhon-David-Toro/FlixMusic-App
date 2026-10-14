@@ -6,6 +6,7 @@ import com.flix.music.core.data.repository.FavoritesRepository
 import com.flix.music.core.data.repository.HistoryRepository
 import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.data.repository.PlaylistsRepository
+import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.model.ArtistRef
 import com.flix.music.core.model.FlixException
 import com.flix.music.core.model.Genre
@@ -20,6 +21,7 @@ import com.flix.music.core.player.PlaybackStatus
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerState
 import com.flix.music.core.ui.WhileUiSubscribed
+import com.flix.music.core.ui.nowPlaying
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -87,7 +89,7 @@ class HomeViewModel @Inject constructor(
 
     private val retryRequests = MutableStateFlow(0)
 
-    val playerState: StateFlow<PlayerState> = playerController.state
+    val nowPlaying: StateFlow<NowPlayingMarker> = playerController.nowPlaying(viewModelScope)
 
     private val history = historyRepository.history
 

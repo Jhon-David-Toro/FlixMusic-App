@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.flix.music.core.data.repository.FavoritesRepository
 import com.flix.music.core.data.repository.FollowedArtistsRepository
 import com.flix.music.core.data.repository.MusicRepository
+import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.model.Artist
 import com.flix.music.core.model.FlixError
 import com.flix.music.core.model.FlixException
@@ -13,8 +14,8 @@ import com.flix.music.core.model.Track
 import com.flix.music.core.model.byArtist
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
-import com.flix.music.core.player.PlayerState
 import com.flix.music.core.ui.WhileUiSubscribed
+import com.flix.music.core.ui.nowPlaying
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,7 +55,7 @@ class SongViewModel @Inject constructor(
 
     private val loaded = MutableStateFlow(SongUiState(track = musicRepository.cachedTrack(trackId)))
 
-    val playerState: StateFlow<PlayerState> = playerController.state
+    val nowPlaying: StateFlow<NowPlayingMarker> = playerController.nowPlaying(viewModelScope)
 
     val uiState: StateFlow<SongUiState> = combine(
         loaded,

@@ -3,13 +3,14 @@ package com.flix.music.feature.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flix.music.core.data.repository.HistoryRepository
+import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.model.HistoryDay
 import com.flix.music.core.model.HistoryEntry
 import com.flix.music.core.model.groupedByDay
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
-import com.flix.music.core.player.PlayerState
 import com.flix.music.core.ui.WhileUiSubscribed
+import com.flix.music.core.ui.nowPlaying
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -32,7 +33,7 @@ class HistoryViewModel @Inject constructor(
     private val clock: Clock,
 ) : ViewModel() {
 
-    val playerState: StateFlow<PlayerState> = playerController.state
+    val nowPlaying: StateFlow<NowPlayingMarker> = playerController.nowPlaying(viewModelScope)
 
     val uiState: StateFlow<HistoryUiState> = historyRepository.history
         .map { entries -> HistoryUiState.Content(entries.groupedByDay(LocalDate.now(clock), clock.zone)) }

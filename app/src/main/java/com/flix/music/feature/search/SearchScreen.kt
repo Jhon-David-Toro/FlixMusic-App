@@ -98,7 +98,7 @@ fun SearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
-    val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val detailNavigator = LocalDetailNavigator.current
     val actions = remember(viewModel, onGenreClick, detailNavigator) {
         SearchActions(
@@ -124,7 +124,7 @@ fun SearchScreen(
         uiState = uiState,
         filter = viewModel.filter,
         recentSearches = recentSearches,
-        nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
+        nowPlaying = nowPlaying,
         actions = actions,
         modifier = modifier,
     )

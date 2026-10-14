@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flix.music.core.data.repository.MusicRepository
+import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.model.FlixException
 import com.flix.music.core.model.Genre
 import com.flix.music.core.model.Genres
@@ -12,7 +13,7 @@ import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.model.distinctArtists
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
-import com.flix.music.core.player.PlayerState
+import com.flix.music.core.ui.nowPlaying
 import com.flix.music.feature.genre.navigation.GenreRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,7 +33,7 @@ class GenreViewModel @Inject constructor(
     private val playerController: PlayerController,
 ) : ViewModel() {
 
-    val playerState: StateFlow<PlayerState> = playerController.state
+    val nowPlaying: StateFlow<NowPlayingMarker> = playerController.nowPlaying(viewModelScope)
 
     /**
      * Reads the [GenreRoute.genreId] argument by name instead of `toRoute()`, so plain

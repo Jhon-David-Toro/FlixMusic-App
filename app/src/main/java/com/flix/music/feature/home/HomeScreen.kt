@@ -102,7 +102,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val detailNavigator = LocalDetailNavigator.current
     val trackMenu = LocalTrackMenu.current
     val actions = remember(viewModel, detailNavigator, trackMenu) {
@@ -125,8 +125,8 @@ fun HomeScreen(
     HomeContent(
         uiState = uiState,
         actions = actions,
-        isPlaying = playerState.isActive,
-        nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
+        isPlaying = nowPlaying.isPlaying,
+        nowPlaying = nowPlaying,
         modifier = modifier,
     )
 }

@@ -88,7 +88,7 @@ fun PlaylistScreen(
     viewModel: PlaylistViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val trackMenu = LocalTrackMenu.current
     val context = LocalContext.current
     val playlist = (uiState as? PlaylistUiState.Content)?.playlist
@@ -118,7 +118,7 @@ fun PlaylistScreen(
     PlaylistContent(
         uiState = uiState,
         actions = actions,
-        nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
+        nowPlaying = nowPlaying,
         modifier = modifier,
     )
 }

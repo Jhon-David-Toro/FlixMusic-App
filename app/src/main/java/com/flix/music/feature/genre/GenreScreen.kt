@@ -81,7 +81,7 @@ fun GenreScreen(
     viewModel: GenreViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val detailNavigator = LocalDetailNavigator.current
     val actions = remember(viewModel, onBack, detailNavigator) {
         GenreActions(
@@ -100,7 +100,7 @@ fun GenreScreen(
         genre = viewModel.genre,
         uiState = uiState,
         actions = actions,
-        nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
+        nowPlaying = nowPlaying,
         modifier = modifier,
     )
 }

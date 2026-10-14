@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.data.repository.SavedAlbumsRepository
+import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.model.Album
 import com.flix.music.core.model.ArtistRef
 import com.flix.music.core.model.FlixError
@@ -14,8 +15,8 @@ import com.flix.music.core.model.fromAlbum
 import com.flix.music.core.model.totalDuration
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
-import com.flix.music.core.player.PlayerState
 import com.flix.music.core.ui.WhileUiSubscribed
+import com.flix.music.core.ui.nowPlaying
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,7 +68,7 @@ class AlbumViewModel @Inject constructor(
 
     private val loaded = MutableStateFlow<AlbumUiState>(AlbumUiState.Loading(albumName, artistName))
 
-    val playerState: StateFlow<PlayerState> = playerController.state
+    val nowPlaying: StateFlow<NowPlayingMarker> = playerController.nowPlaying(viewModelScope)
 
     val uiState: StateFlow<AlbumUiState> = combine(loaded, savedAlbumsRepository.albums) { state, savedAlbums ->
         if (state is AlbumUiState.Content) state.copy(isSaved = savedAlbums.any { it.id == albumId }) else state

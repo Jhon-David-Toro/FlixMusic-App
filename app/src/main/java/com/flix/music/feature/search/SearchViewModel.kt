@@ -7,13 +7,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.data.repository.RecentSearchesRepository
+import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.model.FlixException
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.model.distinctArtists
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
-import com.flix.music.core.player.PlayerState
+import com.flix.music.core.ui.nowPlaying
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -36,7 +37,7 @@ class SearchViewModel @Inject constructor(
     private val playerController: PlayerController,
 ) : ViewModel() {
 
-    val playerState: StateFlow<PlayerState> = playerController.state
+    val nowPlaying: StateFlow<NowPlayingMarker> = playerController.nowPlaying(viewModelScope)
 
     /** Field text. Snapshot state (not a Flow) so the text field never lags or jumps. */
     var query by mutableStateOf("")

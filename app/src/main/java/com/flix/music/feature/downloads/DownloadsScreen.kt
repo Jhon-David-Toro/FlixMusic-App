@@ -66,7 +66,7 @@ fun DownloadsScreen(
     viewModel: DownloadsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val actions = remember(viewModel, onBack) {
         DownloadsActions(
             onBack = onBack,
@@ -78,7 +78,7 @@ fun DownloadsScreen(
     DownloadsContent(
         uiState = uiState,
         actions = actions,
-        nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
+        nowPlaying = nowPlaying,
         modifier = modifier,
     )
 }

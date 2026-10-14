@@ -96,13 +96,13 @@ fun ArtistScreen(
     viewModel: ArtistViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val trackMenu = LocalTrackMenu.current
     val detailNavigator = LocalDetailNavigator.current
     val context = LocalContext.current
     ArtistContent(
         uiState = uiState,
-        nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
+        nowPlaying = nowPlaying,
         actions = ArtistActions(
             onBack = onBack,
             onRetry = viewModel::onRetry,

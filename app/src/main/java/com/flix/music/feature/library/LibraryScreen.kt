@@ -104,7 +104,7 @@ fun LibraryScreen(
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val trackMenu = LocalTrackMenu.current
     val detailNavigator = LocalDetailNavigator.current
     val snackbarHostState = LocalSnackbarHostState.current
@@ -140,7 +140,7 @@ fun LibraryScreen(
         uiState = uiState,
         query = viewModel.query,
         actions = actions,
-        nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
+        nowPlaying = nowPlaying,
         modifier = modifier,
     )
 }

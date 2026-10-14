@@ -80,13 +80,13 @@ fun SongScreen(
     viewModel: SongViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val nowPlaying by viewModel.nowPlaying.collectAsStateWithLifecycle()
     val trackMenu = LocalTrackMenu.current
     val detailNavigator = LocalDetailNavigator.current
     val context = LocalContext.current
     SongContent(
         uiState = uiState,
-        nowPlaying = NowPlayingMarker(playerState.current?.id, playerState.isActive),
+        nowPlaying = nowPlaying,
         actions = SongActions(
             onBack = onBack,
             onRetry = viewModel::onRetry,
