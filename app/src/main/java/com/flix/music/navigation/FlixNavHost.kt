@@ -11,15 +11,19 @@ import com.flix.music.feature.album.navigation.albumScreen
 import com.flix.music.feature.artist.navigation.artistScreen
 import com.flix.music.feature.downloads.navigation.downloadsScreen
 import com.flix.music.feature.downloads.navigation.navigateToDownloads
+import com.flix.music.feature.favorites.navigation.FavoritesRoute
 import com.flix.music.feature.favorites.navigation.favoritesScreen
 import com.flix.music.feature.favorites.navigation.navigateToFavorites
+import com.flix.music.feature.genre.navigation.GenreRoute
 import com.flix.music.feature.genre.navigation.genreScreen
 import com.flix.music.feature.genre.navigation.navigateToGenre
+import com.flix.music.feature.history.navigation.HistoryRoute
 import com.flix.music.feature.history.navigation.historyScreen
 import com.flix.music.feature.history.navigation.navigateToHistory
 import com.flix.music.feature.home.navigation.HomeRoute
 import com.flix.music.feature.home.navigation.homeScreen
 import com.flix.music.feature.library.navigation.libraryGraph
+import com.flix.music.feature.playlist.navigation.PlaylistRoute
 import com.flix.music.feature.playlist.navigation.navigateToPlaylist
 import com.flix.music.feature.playlist.navigation.navigateToPlaylistEdit
 import com.flix.music.feature.playlist.navigation.playlistScreens
@@ -48,14 +52,14 @@ fun FlixNavHost(
     ) {
         homeScreen(
             onOpenProfile = navController::navigateToProfile,
-            onOpenHistory = { navController.openInLibrary { navigateToHistory() } },
+            onOpenHistory = { navController.openInLibrary(HistoryRoute) },
             onOpenSearch = browseMusic,
             onOpenGenre = { genre ->
                 navController.navigateToTopLevel(TopLevelDestination.Search)
-                navController.navigateToGenre(genre.id)
+                navController.navigate(GenreRoute(genre.id))
             },
             onOpenLibrary = { navController.navigateToTopLevel(TopLevelDestination.Library) },
-            onOpenFavorites = { navController.openInLibrary { navigateToFavorites() } },
+            onOpenFavorites = { navController.openInLibrary(FavoritesRoute) },
             onOpenPlaylist = navController::openPlaylistInLibrary,
         )
         searchGraph(
@@ -84,7 +88,7 @@ fun FlixNavHost(
             onBack = navController::popBackStack,
             onOpenSettings = navController::navigateToSettings,
             onOpenStats = navController::navigateToStats,
-            onOpenHistory = { navController.openInLibrary { navigateToHistory() } },
+            onOpenHistory = { navController.openInLibrary(HistoryRoute) },
             onOpenDownloads = navController::navigateToDownloads,
         )
         downloadsScreen(onBack = navController::popBackStack)
@@ -93,12 +97,15 @@ fun FlixNavHost(
 }
 
 /** Opens a playlist inside the Library tab, e.g. from "Ver" on the "Añadida a …" snackbar. */
-fun NavController.openPlaylistInLibrary(playlistId: Long) = openInLibrary { navigateToPlaylist(playlistId) }
+fun NavController.openPlaylistInLibrary(playlistId: Long) = openInLibrary(PlaylistRoute(playlistId))
 
-/** Switches to the Library tab and opens one of its screens there, so the tab stays right. */
-fun NavController.openInLibrary(navigate: NavController.() -> Unit) {
+/**
+ * Switches to the Library tab and opens [route] there, so the tab stays right. The
+ * second step navigates directly: the tab it lands on is still animating in.
+ */
+fun NavController.openInLibrary(route: Any) {
     navigateToTopLevel(TopLevelDestination.Library)
-    navigate()
+    navigate(route)
 }
 
 /**

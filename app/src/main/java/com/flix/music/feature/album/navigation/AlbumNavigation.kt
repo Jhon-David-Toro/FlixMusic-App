@@ -4,6 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.flix.music.core.designsystem.theme.FlixTransitions
+import com.flix.music.core.navigation.navigateFromResumed
 import com.flix.music.feature.album.AlbumScreen
 import kotlinx.serialization.Serializable
 
@@ -17,7 +18,7 @@ data class AlbumRoute(
 )
 
 fun NavController.navigateToAlbum(albumId: String?, albumName: String, artistName: String, artistId: String?) =
-    navigate(AlbumRoute(albumId, albumName, artistName, artistId))
+    navigateFromResumed(AlbumRoute(albumId, albumName, artistName, artistId))
 
 fun NavGraphBuilder.albumScreen(onBack: () -> Unit) {
     composable<AlbumRoute>(
