@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-label="flix">
+  <title>flix</title>
+  <defs>
+    <radialGradient id="dotFill" cx="38%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#EDE9FE"/><stop offset=".45" stop-color="#A78BFA"/><stop offset="1" stop-color="#7C3AED"/>
+    </radialGradient>
+    <radialGradient id="dotGlow">
+      <stop offset="0" stop-color="#A78BFA" stop-opacity=".75"/><stop offset=".45" stop-color="#7C3AED" stop-opacity=".3"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="room" cx="0.641" cy="0.675" r=".75">
+      <stop offset="0" stop-color="#7C3AED" stop-opacity=".28"/><stop offset=".5" stop-color="#7C3AED" stop-opacity=".05"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="card"><rect width="1280" height="400" rx="32"/></clipPath>
+  </defs>
+  <style>
+    .letter { fill: #F7F7FA; opacity: 0; animation: rise 640ms cubic-bezier(.2,0,0,1) forwards; }
+    .dot { transform-origin: 819.9px 270.0px; animation: light 560ms cubic-bezier(.2,0,0,1) both; }
+    .glow { transform-origin: 819.9px 270.0px; animation: halo 1000ms cubic-bezier(.2,0,0,1) both; }
+    @keyframes rise { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: 0 0; } }
+    @keyframes light { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
+    @keyframes halo { 0% { opacity: 0; transform: scale(.2); } 55% { opacity: 1; transform: scale(1.35); } 100% { opacity: .9; transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) { .letter, .dot, .glow { animation: none; opacity: 1; } }
+  </style>
+  <g clip-path="url(#card)">
+    <rect width="1280" height="400" fill="#0C0D11"/>
+    <rect width="1280" height="400" fill="url(#room)"/>
+    <circle class="glow" cx="819.9" cy="270.0" r="64.0" fill="url(#dotGlow)"/>
+    <path class="letter" style="animation-delay:260ms" transform="translate(440.1 290) scale(0.25)" d="M106 0V-336H23V-442L163 -436V-455Q128 -463 105.5 -480.5Q83 -498 73.0 -523.0Q63 -548 63 -576Q63 -619 85.0 -650.5Q107 -682 147.0 -699.5Q187 -717 241 -717Q287 -717 324.5 -705.5Q362 -694 385 -677L376 -547Q352 -564 322.0 -575.0Q292 -586 265 -586Q235 -586 215.5 -570.0Q196 -554 196 -518Q196 -493 206.5 -478.5Q217 -464 232.5 -457.5Q248 -451 263 -449H383V-336H246V0Z"/>
+    <path class="letter" style="animation-delay:330ms" transform="translate(532.4 290) scale(0.25)" d="M66 0V-715H208V0Z"/>
+    <path class="letter" style="animation-delay:400ms" transform="translate(593.4 290) scale(0.25)" d="M66 0V-525H210V0ZM139 -604Q97 -604 74.5 -621.5Q52 -639 52 -673Q52 -708 74.5 -726.0Q97 -744 139 -744Q182 -744 204.5 -726.0Q227 -708 227 -673Q227 -640 204.5 -622.0Q182 -604 139 -604Z"/>
+    <path class="letter" style="animation-delay:470ms" transform="translate(655.1 290) scale(0.25)" d="M14 0 188 -263 14 -525H180L276 -327H293L389 -525H554L380 -263L556 0H391L293 -199H276L180 0Z"/>
+    <circle class="dot" cx="819.9" cy="270.0" r="20.0" fill="url(#dotFill)"/>
+  </g>
+</svg>

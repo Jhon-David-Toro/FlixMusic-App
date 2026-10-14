@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="9 9 90 90" role="img" aria-label="Icono de Flix">
+  <title>Icono de Flix</title>
+  <defs>
+    <radialGradient id="dotFill" cx="38%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#EDE9FE"/><stop offset=".45" stop-color="#A78BFA"/><stop offset="1" stop-color="#7C3AED"/>
+    </radialGradient>
+    <radialGradient id="dotGlow">
+      <stop offset="0" stop-color="#A78BFA" stop-opacity=".75"/><stop offset=".45" stop-color="#7C3AED" stop-opacity=".3"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="room" gradientUnits="userSpaceOnUse" cx="65.78" cy="68.87" r="70">
+      <stop offset="0" stop-color="#7C3AED" stop-opacity=".3"/><stop offset=".55" stop-color="#7C3AED" stop-opacity=".06"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="squircle"><rect x="9" y="9" width="90" height="90" rx="21"/></clipPath>
+  </defs>
+  <g clip-path="url(#squircle)">
+    <rect width="108" height="108" fill="#0C0D11"/>
+    <rect width="108" height="108" fill="url(#room)"/>
+    <circle cx="65.78" cy="68.87" r="13" fill="url(#dotGlow)"/>
+    <path fill="#F7F7FA" transform="translate(35.62 74) scale(0.06416)" d="M106 0V-336H23V-442L163 -436V-455Q128 -463 105.5 -480.5Q83 -498 73.0 -523.0Q63 -548 63 -576Q63 -619 85.0 -650.5Q107 -682 147.0 -699.5Q187 -717 241 -717Q287 -717 324.5 -705.5Q362 -694 385 -677L376 -547Q352 -564 322.0 -575.0Q292 -586 265 -586Q235 -586 215.5 -570.0Q196 -554 196 -518Q196 -493 206.5 -478.5Q217 -464 232.5 -457.5Q248 -451 263 -449H383V-336H246V0Z"/>
+    <circle cx="65.78" cy="68.87" r="5.13" fill="url(#dotFill)"/>
+  </g>
+</svg>

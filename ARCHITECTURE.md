@@ -1,20 +1,20 @@
 # Arquitectura de Flix Music (Android)
 
 Kotlin + Jetpack Compose. Diseño de referencia: [`../design/flix-design.html`](../design/flix-design.html).
-Backend: [`../Flix-Backend`](../Flix-Backend) (FastAPI).
+Sin backend: el teléfono habla directamente con YouTube Music (búsqueda y radio), NewPipeExtractor (audio) y LRCLIB (letras).
 
 ## Capas
 
 ```
-UI (Composables) ──eventos──▶ ViewModel ──▶ Repository ──▶ API (red) / Room (disco)
-        ▲                         │
+UI (Composables) ──eventos──▶ ViewModel ──▶ Repository ──▶ YouTube Music · NewPipe · LRCLIB (red)
+        ▲                         │                          Room · DataStore · descargas (disco)
         └───────── UiState ◀──────┘
 ```
 
 - **UI**: dibuja un `UiState` y avisa de eventos (`onPlayClick`, `onQueryChange`). No decide nada, no llama a la red ni a la base de datos.
 - **ViewModel**: guarda el estado de la pantalla (sobrevive a la rotación), recibe los eventos y pide datos a los repositories. Expone un único `StateFlow<UiState>`.
-- **Repository**: la única puerta a los datos. Decide si algo sale de la API, de Room o de caché. Se define como **interfaz**; la UI y los ViewModels no conocen la implementación.
-- **Fuentes de datos**: cliente HTTP (API) y Room (favoritos, playlists, historial, cola). Solo las usa su repository.
+- **Repository**: la única puerta a los datos. Decide si algo sale de la red, de Room, de lo descargado o de caché. Se define como **interfaz**; la UI y los ViewModels no conocen la implementación.
+- **Fuentes de datos**: clientes de YouTube Music y LRCLIB, NewPipeExtractor, Room (favoritos, playlists, historial), DataStore (ajustes) y el `DownloadManager` de Media3. Solo las usa su repository.
 
 Los datos fluyen hacia abajo (estado) y los eventos hacia arriba. Cada dato tiene una sola fuente de verdad.
 
@@ -27,9 +27,9 @@ Un solo módulo de Gradle (`:app`) con paquetes que imitan módulos futuros:
 | `core/designsystem/theme` | `FlixTheme`: colores, tipografía, formas, spacing, motion. |
 | `core/designsystem/component` | Componentes reutilizables sin lógica de negocio: botones, `TrackRow`, `MiniPlayer`, `StateView`… |
 | `core/model` | Modelos de dominio: `Track`, `Artist`, `Album`, `Playlist`, `QueueItem`… Clases de datos puras. |
-| `core/data` | DTOs de la API, cliente HTTP, DataStore/Room, mappers DTO → dominio, interfaces e implementaciones de repositories. |
+| `core/data` | Clientes de YouTube Music (InnerTube) y LRCLIB con sus parsers, NewPipe, Room/DataStore, interfaces e implementaciones de repositories. |
 | `core/navigation` | Tipos de navegación compartidos entre features (`TopLevelRoute`). |
-| `core/player` | `PlayerController` (interfaz) y su implementación con Media3: servicio en segundo plano, cola, estados de reproducción y precarga de la siguiente pista. |
+| `core/player` | `PlayerController` (interfaz) y su implementación con Media3: servicio en segundo plano, cola, estados de reproducción, precarga de las siguientes pistas, reproducción automática (radio), descargas y resolución del audio en el teléfono. |
 | `feature/<nombre>` | Una carpeta por funcionalidad (`home`, `search`, `genre`, `library`…): su pantalla, su ViewModel, su `UiState` y su ruta de navegación. |
 
 ### Navegación
@@ -43,7 +43,7 @@ Un solo módulo de Gradle (`:app`) con paquetes que imitan módulos futuros:
 1. **`core/model` no importa nada** del resto de la app.
 2. **`core/designsystem` no conoce `feature` ni `data`**: solo dibuja lo que recibe por parámetros.
 3. **Una feature nunca importa otra feature.** Para ir de una a otra se usa la navegación (`onArtistClick(artistId)`), no código de la otra feature.
-4. **Los DTO no salen de `core/data`.** Fuera de ese paquete solo existen modelos de dominio.
+4. **El JSON de la red no sale de `core/data`.** Fuera de ese paquete solo existen modelos de dominio.
 
 ```
 feature/*   ──▶ core/designsystem, core/model, core/data y core/player (solo interfaces)
@@ -53,11 +53,11 @@ core/player ──▶ core/model, core/data
 
 Si un `import` rompe una de estas reglas, es un error de arquitectura aunque compile.
 
-## Por qué los DTO no salen de `core/data`
+## Por qué el JSON no sale de `core/data`
 
-Un DTO copia la forma exacta del JSON del backend (`duration_seconds`, `thumbnail`…). Si la app entera usara DTOs, cualquier cambio del backend (un campo renombrado, un endpoint nuevo) obligaría a tocar pantallas. Con un **mapper** DTO → dominio, el cambio se absorbe en un solo sitio (`core/data`) y la UI sigue usando `Track` sin enterarse.
+YouTube Music no tiene una API pública: su JSON (InnerTube) es el que usa su web y cambia sin aviso. Si la app entera lo leyera, cada cambio obligaría a tocar pantallas. Los parsers (`YouTubeMusicParser`, `LrclibClient`) lo convierten en `Track` y `Lyrics` en un solo sitio, y se prueban con respuestas reales guardadas en `app/src/test/resources`.
 
-Ejemplo: si el backend cambia `duration_seconds` por `duration_ms`, se modifican el DTO y su mapper. `Track`, los ViewModels y las pantallas no cambian.
+Ejemplo: si YouTube Music mueve la duración de una canción a otro campo, se cambia el parser y su test. `Track`, los ViewModels y las pantallas no cambian.
 
 ## Convenciones
 
@@ -66,7 +66,7 @@ Ejemplo: si el backend cambia `duration_seconds` por `duration_ms`, se modifican
 - Ningún color, tamaño o tipografía escrito a mano en una pantalla: todo sale de `FlixTheme`.
 - Los textos visibles van en `res/values/strings.xml`.
 - Las versiones de librerías van en `gradle/libs.versions.toml`.
-- Inyección de dependencias con Hilt (se añade antes de la capa de datos).
+- Inyección de dependencias con Hilt.
 - Cada feature se prueba con repositories falsos (implementaciones de prueba de la interfaz).
 - **Nombres descriptivos siempre**: nada de variables de una letra (`c`, `t`, `e`, `q`, `x`). Cada nombre dice qué contiene: `flixColors`, `searchQuery`, `exception`. El código lo lee alguien que no lo escribió.
   - **Excepción: `it`** está permitido en lambdas cortas de una línea donde es obvio qué es (`tracks.map { it.toTrack() }`, `key = { it.id }`). Si la lambda ocupa varias líneas, hay lambdas anidadas o no es evidente qué contiene, se nombra: `{ track -> … }`.
