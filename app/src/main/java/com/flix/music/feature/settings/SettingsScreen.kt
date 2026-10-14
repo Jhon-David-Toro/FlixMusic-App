@@ -30,7 +30,6 @@ import com.flix.music.core.designsystem.component.Segment
 import com.flix.music.core.designsystem.component.SettingsChevron
 import com.flix.music.core.designsystem.component.SettingsGroupTitle
 import com.flix.music.core.designsystem.component.SettingsRow
-import com.flix.music.core.designsystem.component.SoonTag
 import com.flix.music.core.designsystem.theme.FlixPreview
 import com.flix.music.core.designsystem.theme.FlixTheme
 import com.flix.music.core.model.AppTheme
@@ -41,6 +40,7 @@ import kotlinx.coroutines.launch
 data class SettingsActions(
     val onBack: () -> Unit = {},
     val onThemeChange: (AppTheme) -> Unit = {},
+    val onAutoplayChange: (Boolean) -> Unit = {},
     val onRememberPlaybackModesChange: (Boolean) -> Unit = {},
     val onClearHistory: () -> Unit = {},
     val onClearCache: () -> Unit = {},
@@ -59,6 +59,7 @@ fun SettingsScreen(
         actions = SettingsActions(
             onBack = onBack,
             onThemeChange = viewModel::onThemeChange,
+            onAutoplayChange = viewModel::onAutoplayChange,
             onRememberPlaybackModesChange = viewModel::onRememberPlaybackModesChange,
             onClearHistory = viewModel::onClearHistory,
             onClearCache = viewModel::onClearCache,
@@ -68,8 +69,8 @@ fun SettingsScreen(
 }
 
 /**
- * Ajustes (design `settings`). Autoplay, which the design marks as coming later, is
- * shown disabled with "Próximamente".
+ * Ajustes (design `settings`): appearance, playback (autoplay, remember shuffle and
+ * repeat), data and about.
  */
 @Composable
 fun SettingsContent(
@@ -112,8 +113,10 @@ fun SettingsContent(
                 SettingsRow(
                     title = stringResource(R.string.settings_autoplay),
                     subtitle = stringResource(R.string.settings_autoplay_body),
-                    enabled = false,
-                ) { SoonTag() }
+                    onClick = { actions.onAutoplayChange(!uiState.settings.autoplay) },
+                ) {
+                    FlixSwitch(checked = uiState.settings.autoplay, onCheckedChange = actions.onAutoplayChange)
+                }
                 SettingsRow(
                     title = stringResource(R.string.settings_remember_modes),
                     onClick = { actions.onRememberPlaybackModesChange(!uiState.settings.rememberPlaybackModes) },

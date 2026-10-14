@@ -39,4 +39,12 @@ class FakeMusicRepository : MusicRepository {
         error?.let { throw FlixException(it) }
         return songDetails ?: SongDetails(tracks.first { it.id == trackId }, isPlayable = true)
     }
+
+    var radioTracks: List<Track> = emptyList()
+
+    override suspend fun radio(track: Track): List<Track> {
+        delay(responseDelayMillis)
+        error?.let { throw FlixException(it) }
+        return radioTracks
+    }
 }

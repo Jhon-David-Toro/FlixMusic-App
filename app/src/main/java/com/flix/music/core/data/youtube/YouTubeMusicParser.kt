@@ -22,6 +22,17 @@ internal fun parseSongSearch(response: JsonElement): List<Track> =
         .flatMap { section -> section.path("musicShelfRenderer", "contents").items() }
         .mapNotNull { entry -> entry.field("musicResponsiveListItemRenderer")?.toTrack() }
 
+/**
+ * Reads the songs of a YouTube Music `next` response for a radio ("RDAMVM" + id),
+ * seed song first. Their byline follows the search rules; videos also list views
+ * and likes, which are skipped.
+ */
+internal fun parseRadio(response: JsonElement): List<Track> =
+    response.path("contents", "singleColumnMusicWatchNextResultsRenderer", "tabbedRenderer", "watchNextTabbedResultsRenderer", "tabs")
+        .items().firstOrNull()
+        .path("tabRenderer", "content", "musicQueueRenderer", "content", "playlistPanelRenderer", "contents").items()
+        .mapNotNull { entry -> entry.field("playlistPanelVideoRenderer")?.toRadioTrack() }
+
 /** Asks Google's image CDN for the 544px version of a thumbnail, as the design uses. */
 internal fun upscaledThumbnail(url: String?): String? = url?.replaceFirst(THUMBNAIL_SIZE, "=w$ARTWORK_SIZE-h$ARTWORK_SIZE")
 
@@ -42,6 +53,24 @@ private fun JsonElement.toTrack(): Track? {
         artists = details.artists,
         album = details.album,
         duration = details.duration,
+        artworkUrl = upscaledThumbnail(thumbnailUrl),
+    )
+}
+
+private fun JsonElement.toRadioTrack(): Track? {
+    val id = field("videoId").text() ?: return null
+    val title = path("title", "runs").items().firstOrNull().field("text").text() ?: return null
+    val details = parseSongRuns(path("longBylineText", "runs").items())
+    val duration = path("lengthText", "runs").items().firstOrNull().field("text").text()
+        ?.takeIf(DURATION_TEXT::matches)
+        ?.let(::parseDuration)
+    val thumbnailUrl = path("thumbnail", "thumbnails").items().lastOrNull().field("url").text()
+    return Track(
+        id = id,
+        title = title,
+        artists = details.artists,
+        album = details.album,
+        duration = duration ?: details.duration,
         artworkUrl = upscaledThumbnail(thumbnailUrl),
     )
 }
@@ -90,4 +119,4 @@ private const val SECONDS_PER_MINUTE = 60
 private val THUMBNAIL_SIZE = Regex("=w\\d+-h\\d+")
 private val DURATION_TEXT = Regex("^(\\d+:)*\\d+:\\d+$")
 private val YEAR_TEXT = Regex("^\\d{4}$")
-private val VIEWS_TEXT = Regex("^[\\d.,]+[KMB]? (plays|views)$")
+private val VIEWS_TEXT = Regex("^[\\d.,]+[KMB]? (plays|views|likes)$")

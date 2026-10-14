@@ -15,4 +15,7 @@ interface MusicRepository {
     fun cachedTrack(trackId: String): Track?
 
     suspend fun song(trackId: String): SongDetails
+
+    /** Songs like [track] to keep playing after it (YouTube Music's radio), without [track] itself. */
+    suspend fun radio(track: Track): List<Track>
 }

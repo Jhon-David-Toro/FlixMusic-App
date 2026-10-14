@@ -8,6 +8,8 @@ data class PlaybackModes(val shuffle: Boolean, val repeatMode: String)
 
 data class UserSettings(
     val theme: AppTheme = AppTheme.System,
+    /** When the queue runs out, keep playing similar songs (on by default, as in YouTube Music). */
+    val autoplay: Boolean = true,
     val rememberPlaybackModes: Boolean = false,
     val playbackModes: PlaybackModes? = null,
     val onboardingCompleted: Boolean = false,

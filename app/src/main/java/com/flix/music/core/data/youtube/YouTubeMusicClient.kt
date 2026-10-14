@@ -2,6 +2,8 @@ package com.flix.music.core.data.youtube
 
 import com.flix.music.core.model.Track
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
@@ -21,7 +23,7 @@ class YouTubeMusicException(val statusCode: Int) : IOException("YouTube Music an
 
 /**
  * YouTube Music's own web API ("InnerTube"), called from the phone without an
- * account, exactly like ytmusicapi does: search answers anonymously. Blocking;
+ * account, exactly like ytmusicapi does: search and radios answer anonymously. Blocking;
  * call it off the main thread.
  */
 @Singleton
@@ -32,7 +34,26 @@ class YouTubeMusicClient @Inject constructor(
 ) {
 
     /** Songs for [query], best match first (about 20). */
-    fun searchSongs(query: String): List<Track> {
+    fun searchSongs(query: String): List<Track> =
+        parseSongSearch(
+            post(SEARCH_URL) {
+                put("query", query)
+                put("params", SONGS_FILTER)
+            },
+        )
+
+    /** The song's radio: similar songs to keep playing after it (about 50, the song itself first). */
+    fun radio(trackId: String): List<Track> =
+        parseRadio(
+            post(NEXT_URL) {
+                put("videoId", trackId)
+                put("playlistId", RADIO_PLAYLIST_PREFIX + trackId)
+                put("isAudioOnly", true)
+            },
+        )
+
+    /** Calls an InnerTube endpoint as the YouTube Music website does, with [fields] next to the client context. */
+    private fun post(url: String, fields: JsonObjectBuilder.() -> Unit): JsonElement {
         val body = buildJsonObject {
             putJsonObject("context") {
                 putJsonObject("client") {
@@ -41,11 +62,10 @@ class YouTubeMusicClient @Inject constructor(
                     put("hl", LANGUAGE)
                 }
             }
-            put("query", query)
-            put("params", SONGS_FILTER)
+            fields()
         }
         val request = Request.Builder()
-            .url(SEARCH_URL)
+            .url(url)
             .post(body.toString().toRequestBody(JSON_MEDIA_TYPE))
             .header("User-Agent", USER_AGENT)
             .header("Origin", ORIGIN)
@@ -53,7 +73,7 @@ class YouTubeMusicClient @Inject constructor(
             .build()
         okHttpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw YouTubeMusicException(response.code)
-            return parseSongSearch(json.parseToJsonElement(response.body.string()))
+            return json.parseToJsonElement(response.body.string())
         }
     }
 
@@ -63,6 +83,8 @@ class YouTubeMusicClient @Inject constructor(
     private companion object {
         const val ORIGIN = "https://music.youtube.com"
         const val SEARCH_URL = "$ORIGIN/youtubei/v1/search?prettyPrint=false"
+        const val NEXT_URL = "$ORIGIN/youtubei/v1/next?prettyPrint=false"
+        const val RADIO_PLAYLIST_PREFIX = "RDAMVM"
         const val CLIENT_NAME = "WEB_REMIX"
         const val LANGUAGE = "en"
         const val SONGS_FILTER = "EgWKAQIIAWoMEA4QChADEAQQCRAF"

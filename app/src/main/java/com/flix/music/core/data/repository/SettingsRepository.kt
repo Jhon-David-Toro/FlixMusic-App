@@ -12,6 +12,8 @@ interface SettingsRepository {
 
     suspend fun setTheme(theme: AppTheme)
 
+    suspend fun setAutoplay(enabled: Boolean)
+
     suspend fun setRememberPlaybackModes(remember: Boolean)
 
     suspend fun savePlaybackModes(modes: PlaybackModes)

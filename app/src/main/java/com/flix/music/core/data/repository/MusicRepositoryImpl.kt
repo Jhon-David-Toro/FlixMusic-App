@@ -38,6 +38,13 @@ class MusicRepositoryImpl @Inject constructor(
         SongDetails(track, isPlayable = true)
     }
 
+    override suspend fun radio(track: Track): List<Track> = catalogCall {
+        youTubeMusicClient.radio(track.id)
+            .filterNot { radioTrack -> radioTrack.id == track.id }
+            .distinctBy(Track::id)
+            .onEach { radioTrack -> seenTracks[radioTrack.id] = radioTrack }
+    }
+
     private fun trackFromYouTube(trackId: String): Track {
         newPipeSetup.ensureInitialized()
         val info = StreamInfo.getInfo(ServiceList.YouTube, YOUTUBE_WATCH_URL + trackId)

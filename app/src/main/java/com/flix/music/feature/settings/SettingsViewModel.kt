@@ -49,6 +49,10 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setTheme(theme) }
     }
 
+    fun onAutoplayChange(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setAutoplay(enabled) }
+    }
+
     fun onRememberPlaybackModesChange(remember: Boolean) {
         viewModelScope.launch { settingsRepository.setRememberPlaybackModes(remember) }
     }

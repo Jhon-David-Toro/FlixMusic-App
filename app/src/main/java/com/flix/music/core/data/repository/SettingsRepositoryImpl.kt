@@ -28,6 +28,7 @@ class SettingsRepositoryImpl @Inject constructor(
             UserSettings(
                 theme = preferences[THEME_KEY]?.let { name -> AppTheme.entries.firstOrNull { it.name == name } }
                     ?: AppTheme.System,
+                autoplay = preferences[AUTOPLAY_KEY] ?: true,
                 rememberPlaybackModes = preferences[REMEMBER_MODES_KEY] ?: false,
                 playbackModes = repeatMode?.let { mode -> PlaybackModes(preferences[SHUFFLE_KEY] ?: false, mode) },
                 onboardingCompleted = preferences[ONBOARDING_KEY] ?: false,
@@ -36,6 +37,10 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun setTheme(theme: AppTheme) {
         dataStore.edit { preferences -> preferences[THEME_KEY] = theme.name }
+    }
+
+    override suspend fun setAutoplay(enabled: Boolean) {
+        dataStore.edit { preferences -> preferences[AUTOPLAY_KEY] = enabled }
     }
 
     override suspend fun setRememberPlaybackModes(remember: Boolean) {
@@ -55,6 +60,7 @@ class SettingsRepositoryImpl @Inject constructor(
 
     private companion object {
         val THEME_KEY = stringPreferencesKey("theme")
+        val AUTOPLAY_KEY = booleanPreferencesKey("autoplay")
         val REMEMBER_MODES_KEY = booleanPreferencesKey("remember_playback_modes")
         val SHUFFLE_KEY = booleanPreferencesKey("shuffle")
         val REPEAT_MODE_KEY = stringPreferencesKey("repeat_mode")

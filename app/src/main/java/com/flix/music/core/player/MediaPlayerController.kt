@@ -9,9 +9,12 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.flix.music.core.data.repository.HistoryRepository
+import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.data.repository.SettingsRepository
+import com.flix.music.core.model.FlixException
 import com.flix.music.core.model.PlaybackModes
 import com.flix.music.core.model.Track
+import com.flix.music.core.model.UserSettings
 import com.flix.music.core.player.stream.StreamResolver
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -29,7 +32,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -50,12 +55,14 @@ import kotlin.time.Duration.Companion.milliseconds
  * The next track's audio is resolved ahead on the phone so skips start instantly,
  * and every track is added to the history the first time it actually plays.
  * Shuffle and repeat are saved when they change and restored on start when the user
- * turned on "Recordar aleatorio y repetir".
+ * turned on "Recordar aleatorio y repetir". With autoplay on, once the last song of
+ * the queue starts, its YouTube Music radio is appended so the music goes on.
  */
 @Singleton
 class MediaPlayerController @Inject constructor(
     @ApplicationContext private val context: Context,
     private val historyRepository: HistoryRepository,
+    private val musicRepository: MusicRepository,
     private val settingsRepository: SettingsRepository,
     private val streamResolver: StreamResolver,
 ) : PlayerController {
@@ -78,6 +85,21 @@ class MediaPlayerController @Inject constructor(
     private var retriedCurrentTrack = false
     private var recoveringFromError = false
     private var positionUpdates: Job? = null
+    private var autoplayEnabled = UserSettings().autoplay
+    private var radioSeedId: String? = null
+    private var radioRequest: Job? = null
+
+    init {
+        scope.launch {
+            settingsRepository.settings
+                .map { settings -> settings.autoplay }
+                .distinctUntilChanged()
+                .collect { enabled ->
+                    autoplayEnabled = enabled
+                    continueWithRadio()
+                }
+        }
+    }
 
     private val listener = object : Player.Listener {
 
@@ -107,6 +129,7 @@ class MediaPlayerController @Inject constructor(
             publishState(player)
             updatePositionTicker(player)
             recordInHistoryOnFirstPlay()
+            if (events.containsAny(*QUEUE_END_EVENTS)) continueWithRadio()
         }
     }
 
@@ -205,6 +228,8 @@ class MediaPlayerController @Inject constructor(
         shuffle: Boolean,
     ) {
         this.source = source
+        radioRequest?.cancel()
+        radioSeedId = null
         queuedTracks = tracks.associateBy { it.id }
         mediaController.shuffleModeEnabled = shuffle
         mediaController.setMediaItems(tracks.map { it.toMediaItem() }, startIndex.coerceIn(tracks.indices), 0L)
@@ -273,6 +298,44 @@ class MediaPlayerController @Inject constructor(
                 mediaController.play()
             }
             else -> recoveringFromError = false
+        }
+    }
+
+    /**
+     * Appends the radio of the last song when it starts playing (repeat off), once per
+     * song. A failed request (e.g. offline) is tried again on the next queue change.
+     */
+    private fun continueWithRadio() {
+        val mediaController = connectedController ?: return
+        val currentItem = mediaController.currentMediaItem ?: return
+        if (!autoplayEnabled || mediaController.repeatMode != Player.REPEAT_MODE_OFF) return
+        if (mediaController.hasNextMediaItem() || currentItem.mediaId == radioSeedId) return
+        radioSeedId = currentItem.mediaId
+        val seed = currentItem.toTrack(queuedTracks)
+        radioRequest?.cancel()
+        radioRequest = scope.launch {
+            val radio = try {
+                musicRepository.radio(seed)
+            } catch (exception: FlixException) {
+                radioSeedId = null
+                return@launch
+            }
+            val queuedIds = (0 until mediaController.mediaItemCount).mapTo(HashSet()) { index ->
+                mediaController.getMediaItemAt(index).mediaId
+            }
+            appendToQueue(mediaController, autoplayAdditions(radio, queuedIds))
+        }
+    }
+
+    private fun appendToQueue(mediaController: MediaController, tracks: List<Track>) {
+        if (tracks.isEmpty()) return
+        val firstNewIndex = mediaController.mediaItemCount
+        val queueHadEnded = mediaController.playbackState == Player.STATE_ENDED
+        queuedTracks = queuedTracks + tracks.associateBy(Track::id)
+        mediaController.addMediaItems(tracks.map(Track::toMediaItem))
+        if (queueHadEnded) {
+            mediaController.seekTo(firstNewIndex, 0L)
+            mediaController.play()
         }
     }
 
@@ -376,5 +439,11 @@ class MediaPlayerController @Inject constructor(
     private companion object {
         val POSITION_UPDATE_INTERVAL = 250.milliseconds
         const val PREFETCH_COUNT = 2
+        val QUEUE_END_EVENTS = intArrayOf(
+            Player.EVENT_MEDIA_ITEM_TRANSITION,
+            Player.EVENT_TIMELINE_CHANGED,
+            Player.EVENT_REPEAT_MODE_CHANGED,
+            Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED,
+        )
     }
 }
