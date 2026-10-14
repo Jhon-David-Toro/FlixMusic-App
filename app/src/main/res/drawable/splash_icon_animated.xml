@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="288dp"
+            android:height="288dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <group android:pivotX="54" android:pivotY="54" android:scaleX="1.1" android:scaleY="1.1">
+                <group android:name="glow" android:pivotX="65.78" android:pivotY="68.87">
+        <path android:name="glowPath" android:pathData="M52.78,68.87a13.00,13.00 0 1,0 26.00,0a13.00,13.00 0 1,0 -26.00,0Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="radial" android:centerX="65.78" android:centerY="68.87" android:gradientRadius="13.0">
+                <item android:offset="0" android:color="#BFA78BFA" />
+                <item android:offset="0.45" android:color="#4D7C3AED" />
+                <item android:offset="1" android:color="#007C3AED" />
+                </gradient>
+            </aapt:attr>
+        </path>
+                </group>
+        <group android:name="letter">
+            <group android:translateX="35.62" android:translateY="74.0" android:scaleX="0.06416" android:scaleY="0.06416">
+                <path android:name="letterPath" android:fillColor="#FFF7F7FA" android:pathData="M106,0V-336H23V-442L163,-436V-455Q128,-463 105.5,-480.5Q83,-498 73,-523Q63,-548 63,-576Q63,-619 85,-650.5Q107,-682 147,-699.5Q187,-717 241,-717Q287,-717 324.5,-705.5Q362,-694 385,-677L376,-547Q352,-564 322,-575Q292,-586 265,-586Q235,-586 215.5,-570Q196,-554 196,-518Q196,-493 206.5,-478.5Q217,-464 232.5,-457.5Q248,-451 263,-449H383V-336H246V0Z" />
+            </group>
+        </group>
+                <group android:name="dot" android:pivotX="65.78" android:pivotY="68.87">
+        <path android:pathData="M60.65,68.87a5.13,5.13 0 1,0 10.26,0a5.13,5.13 0 1,0 -10.26,0Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="radial" android:centerX="64.5" android:centerY="67.33" android:gradientRadius="5.9">
+                <item android:offset="0" android:color="#FFEDE9FE" />
+                <item android:offset="0.45" android:color="#FFA78BFA" />
+                <item android:offset="1" android:color="#FF7C3AED" />
+                </gradient>
+            </aapt:attr>
+        </path>
+                </group>
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="glow">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator android:duration="900" android:startOffset="0" android:interpolator="@interpolator/flix_standard">
+                    <propertyValuesHolder android:propertyName="scaleX" android:valueType="floatType">
+                        <keyframe android:fraction="0" android:value="0.2" />
+                        <keyframe android:fraction="0.55" android:value="1.35" />
+                        <keyframe android:fraction="1" android:value="1" />
+                    </propertyValuesHolder>
+                </objectAnimator>
+                <objectAnimator android:duration="900" android:startOffset="0" android:interpolator="@interpolator/flix_standard">
+                    <propertyValuesHolder android:propertyName="scaleY" android:valueType="floatType">
+                        <keyframe android:fraction="0" android:value="0.2" />
+                        <keyframe android:fraction="0.55" android:value="1.35" />
+                        <keyframe android:fraction="1" android:value="1" />
+                    </propertyValuesHolder>
+                </objectAnimator>
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="glowPath">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator android:propertyName="fillAlpha" android:valueType="floatType" android:valueFrom="0" android:valueTo="1" android:duration="500" android:startOffset="0" android:interpolator="@interpolator/flix_standard" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="dot">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator android:duration="520" android:startOffset="0" android:interpolator="@interpolator/flix_standard">
+                    <propertyValuesHolder android:propertyName="scaleX" android:valueType="floatType">
+                        <keyframe android:fraction="0" android:value="0" />
+                        <keyframe android:fraction="0.7" android:value="1.25" />
+                        <keyframe android:fraction="1" android:value="1" />
+                    </propertyValuesHolder>
+                </objectAnimator>
+                <objectAnimator android:duration="520" android:startOffset="0" android:interpolator="@interpolator/flix_standard">
+                    <propertyValuesHolder android:propertyName="scaleY" android:valueType="floatType">
+                        <keyframe android:fraction="0" android:value="0" />
+                        <keyframe android:fraction="0.7" android:value="1.25" />
+                        <keyframe android:fraction="1" android:value="1" />
+                    </propertyValuesHolder>
+                </objectAnimator>
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="letter">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator android:propertyName="translateY" android:valueType="floatType" android:valueFrom="6" android:valueTo="0" android:duration="560" android:startOffset="260" android:interpolator="@interpolator/flix_standard" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="letterPath">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator android:propertyName="fillAlpha" android:valueType="floatType" android:valueFrom="0" android:valueTo="1" android:duration="560" android:startOffset="260" android:interpolator="@interpolator/flix_standard" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>
