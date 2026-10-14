@@ -10,6 +10,8 @@ import com.flix.music.core.data.repository.HistoryRepository
 import com.flix.music.core.data.repository.HistoryRepositoryImpl
 import com.flix.music.core.data.repository.LibraryLayoutRepository
 import com.flix.music.core.data.repository.LibraryLayoutRepositoryImpl
+import com.flix.music.core.data.repository.LyricsRepository
+import com.flix.music.core.data.repository.LyricsRepositoryImpl
 import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.data.repository.MusicRepositoryImpl
 import com.flix.music.core.data.repository.PlaylistsRepository
@@ -68,4 +70,8 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindCacheRepository(impl: CacheRepositoryImpl): CacheRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLyricsRepository(impl: LyricsRepositoryImpl): LyricsRepository
 }
