@@ -43,6 +43,7 @@ import com.flix.music.R
 import com.flix.music.core.designsystem.component.ConfirmDialog
 import com.flix.music.core.designsystem.component.FlixBottomSheet
 import com.flix.music.core.designsystem.component.FlixTopAppBar
+import com.flix.music.core.designsystem.component.LocalSnackbarHostState
 import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.designsystem.component.PlayPauseButton
 import com.flix.music.core.designsystem.component.PlaylistArtwork
@@ -91,6 +92,9 @@ fun PlaylistScreen(
     val trackMenu = LocalTrackMenu.current
     val context = LocalContext.current
     val playlist = (uiState as? PlaylistUiState.Content)?.playlist
+    val snackbarHostState = LocalSnackbarHostState.current
+    val coroutineScope = rememberCoroutineScope()
+    val downloadStartedMessage = stringResource(R.string.download_playlist_started)
 
     LaunchedEffect(uiState) {
         if (uiState == PlaylistUiState.Missing) onBack()
@@ -105,7 +109,10 @@ fun PlaylistScreen(
         onTrackClick = viewModel::onTrackClick,
         onTrackMore = { track -> trackMenu.open(track) },
         onShare = { playlist?.let(context::sharePlaylist) },
-        onDownload = viewModel::onDownload,
+        onDownload = {
+            viewModel.onDownload()
+            coroutineScope.launch { snackbarHostState.showSnackbar(downloadStartedMessage) }
+        },
         onDelete = viewModel::onDelete,
     )
     PlaylistContent(
