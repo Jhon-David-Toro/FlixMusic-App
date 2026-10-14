@@ -1,22 +1,25 @@
-<p align="center">
-  <img src="docs/images/flix-banner.svg" alt="flix" width="100%">
-</p>
+ <div align="center">
 
-<p align="center">
-  <b>Tu música de YouTube Music, en una app nativa, oscura y sin anuncios.</b><br>
+  <img src="docs/images/flix-banner.svg" alt="Flix" width="100%" />
+
+  **Tu música de YouTube Music, en una app nativa, oscura y sin anuncios.**
+
   Sin cuenta, sin servidor: todo ocurre en tu teléfono.
-</p>
 
-<p align="center">
-  <a href="../../releases/latest"><img alt="Descargar APK" src="https://img.shields.io/badge/Descargar-APK-7C3AED?style=for-the-badge&logo=android&logoColor=white"></a>
-</p>
+  <br />
 
-<p align="center">
-  <img alt="Android 8.0+" src="https://img.shields.io/badge/Android-8.0%2B-0C0D11?logo=android&logoColor=A78BFA">
-  <img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-2.4-0C0D11?logo=kotlin&logoColor=A78BFA">
-  <img alt="Jetpack Compose" src="https://img.shields.io/badge/Jetpack%20Compose-Material%203-0C0D11?logo=jetpackcompose&logoColor=A78BFA">
-  <img alt="Licencia GPL-3.0" src="https://img.shields.io/badge/Licencia-GPL--3.0-0C0D11">
-</p>
+  <a href="./releases/latest">
+    <img alt="Descargar APK" src="https://img.shields.io/badge/Descargar-APK-7C3AED?style=for-the-badge&logo=android&logoColor=white" />
+  </a>
+
+  <br /><br />
+
+  <img alt="Android 8.0+" src="https://img.shields.io/badge/Android-8.0%2B-0C0D11?logo=android&logoColor=A78BFA" />
+  <img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-2.4-0C0D11?logo=kotlin&logoColor=A78BFA" />
+  <img alt="Jetpack Compose" src="https://img.shields.io/badge/Jetpack%20Compose-Material%203-0C0D11?logo=jetpackcompose&logoColor=A78BFA" />
+  <img alt="Licencia GPL-3.0" src="https://img.shields.io/badge/Licencia-GPL--3.0-0C0D11" />
+
+</div>
 
 ---
 
@@ -37,7 +40,7 @@ Flix es un reproductor de música para Android que busca y reproduce canciones d
 
 ## Instalar
 
-1. Descarga `Flix-x.y.z.apk` de la [última versión](../../releases/latest).
+1. Descarga `flix-music-1.0.0.apk` de la [última versión](../../releases/latest).
 2. Ábrelo en el teléfono. Si Android lo pide, permite **instalar apps desconocidas** para la app con la que lo abriste.
 3. Si **Google Play Protect** pregunta, puedes dejar que la analice. La avisa como "desconocida" porque no viene de Play Store, no porque haga algo raro.
 
