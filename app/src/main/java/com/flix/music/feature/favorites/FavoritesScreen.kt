@@ -33,6 +33,7 @@ import com.flix.music.core.designsystem.component.LocalSnackbarHostState
 import com.flix.music.core.designsystem.component.NowPlayingMarker
 import com.flix.music.core.designsystem.component.PlayPauseButton
 import com.flix.music.core.designsystem.component.SearchField
+import com.flix.music.core.designsystem.component.SearchFieldCompactHeight
 import com.flix.music.core.designsystem.component.SortOrderChip
 import com.flix.music.core.designsystem.component.StateView
 import com.flix.music.core.designsystem.component.TrackRow
@@ -47,9 +48,9 @@ import com.flix.music.core.model.SortOrder
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.totalDuration
 import com.flix.music.core.ui.LocalTrackMenu
+import kotlinx.coroutines.launch
 import java.time.Instant
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.launch
 
 /** Every user action on the Favorites screen. Defaults do nothing, which keeps previews short. */
 data class FavoritesActions(
@@ -142,6 +143,7 @@ fun FavoritesContent(
                         placeholder = stringResource(R.string.favorites_search),
                         clearLabel = stringResource(R.string.search_clear),
                         modifier = Modifier.weight(1f),
+                        height = SearchFieldCompactHeight,
                     )
                     SortOrderChip(order = sortOrder, onOrderChange = actions.onSortOrderChange)
                 }

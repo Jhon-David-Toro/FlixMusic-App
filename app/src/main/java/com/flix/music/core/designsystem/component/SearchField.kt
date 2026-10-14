@@ -1,23 +1,47 @@
 package com.flix.music.core.designsystem.component
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.flix.music.R
+import com.flix.music.core.designsystem.theme.FlixPreview
 import com.flix.music.core.designsystem.theme.FlixTheme
 
+/**
+ * Search input (design `.field`): one line, [height] tall (44 dp, 38 dp next to a chip),
+ * surfaceVariant at rest and surface with a 2 dp textPrimary outline while focused.
+ * The placeholder never wraps; it ends with an ellipsis.
+ */
 @Composable
 fun SearchField(
     query: String,
@@ -27,50 +51,94 @@ fun SearchField(
     clearLabel: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    height: Dp = DEFAULT_HEIGHT,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
-    val flixColors = FlixTheme.colors
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
+    val colors = FlixTheme.colors
+    val shape = FlixTheme.shapes.md
+    val textStyle = FlixTheme.typography.body.copy(fontSize = 13.5.sp, lineHeight = 18.sp, color = colors.textPrimary)
 
-    OutlinedTextField(
+    BasicTextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
             .fillMaxWidth()
-            .alpha(if (enabled) 1f else 0.4f),
+            .height(height)
+            .alpha(if (enabled) 1f else DISABLED_ALPHA),
         enabled = enabled,
-        placeholder = { Text(placeholder, style = FlixTheme.typography.body) },
-        leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = onClear) {
-                    Icon(painterResource(R.drawable.ic_close), contentDescription = clearLabel)
+        singleLine = true,
+        textStyle = textStyle,
+        cursorBrush = SolidColor(colors.primary),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+        interactionSource = interactionSource,
+        decorationBox = { innerTextField ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(height)
+                    .background(if (isFocused) colors.surface else colors.surfaceVariant, shape)
+                    .border(FOCUS_OUTLINE, if (isFocused) colors.textPrimary else Color.Transparent, shape)
+                    .padding(start = 12.dp, end = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_search),
+                    contentDescription = null,
+                    tint = colors.textSecondary,
+                    modifier = Modifier.size(ICON_SIZE),
+                )
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    if (query.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            style = textStyle,
+                            color = colors.textTertiary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    innerTextField()
+                }
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = onClear, modifier = Modifier.size(CLEAR_BUTTON_SIZE)) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_close),
+                            contentDescription = clearLabel,
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(ICON_SIZE),
+                        )
+                    }
                 }
             }
         },
-        singleLine = true,
-        shape = FlixTheme.shapes.md,
-        textStyle = FlixTheme.typography.body,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
-        colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = flixColors.surfaceVariant,
-            focusedContainerColor = flixColors.surface,
-            disabledContainerColor = flixColors.surfaceVariant,
-            unfocusedBorderColor = Color.Transparent,
-            focusedBorderColor = flixColors.textPrimary,
-            disabledBorderColor = Color.Transparent,
-            cursorColor = flixColors.primary,
-            focusedTextColor = flixColors.textPrimary,
-            unfocusedTextColor = flixColors.textPrimary,
-            disabledTextColor = flixColors.textPrimary,
-            focusedPlaceholderColor = flixColors.textTertiary,
-            unfocusedPlaceholderColor = flixColors.textTertiary,
-            disabledPlaceholderColor = flixColors.textTertiary,
-            focusedLeadingIconColor = flixColors.textSecondary,
-            unfocusedLeadingIconColor = flixColors.textSecondary,
-            disabledLeadingIconColor = flixColors.textSecondary,
-            focusedTrailingIconColor = flixColors.textSecondary,
-            unfocusedTrailingIconColor = flixColors.textSecondary,
-        ),
     )
+}
+
+/** Height next to a chip, as in Favoritos (design: `.field` at 38 px). */
+val SearchFieldCompactHeight = 38.dp
+
+private val DEFAULT_HEIGHT = 44.dp
+private val ICON_SIZE = 20.dp
+private val CLEAR_BUTTON_SIZE = 32.dp
+private val FOCUS_OUTLINE = 2.dp
+private const val DISABLED_ALPHA = 0.4f
+
+@Preview(name = "SearchField", widthDp = 360)
+@Composable
+private fun SearchFieldPreview() {
+    FlixPreview {
+        SearchField(
+            query = "",
+            onQueryChange = {},
+            onClear = {},
+            placeholder = "Buscar en favoritos",
+            clearLabel = "Borrar",
+            modifier = Modifier.padding(16.dp),
+            height = SearchFieldCompactHeight,
+        )
+    }
 }
