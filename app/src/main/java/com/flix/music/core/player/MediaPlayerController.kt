@@ -85,7 +85,7 @@ class MediaPlayerController @Inject constructor(
             currentTrackWasReady = false
             retriedCurrentTrack = false
             recordedCurrentTrack = false
-            prefetchNextTrack()
+            prefetchNextTracks()
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -112,6 +112,7 @@ class MediaPlayerController @Inject constructor(
 
     override fun play(tracks: List<Track>, startIndex: Int, source: PlaybackSource, shuffle: Boolean) {
         if (tracks.isEmpty()) return
+        tracks.getOrNull(startIndex)?.let { firstTrack -> resolveAhead(firstTrack.id) }
         withController { mediaController -> startQueue(mediaController, tracks, startIndex, source, shuffle) }
     }
 
@@ -275,13 +276,23 @@ class MediaPlayerController @Inject constructor(
         }
     }
 
-    private fun prefetchNextTrack() {
+    /** Resolves the next [PREFETCH_COUNT] songs in play order, so skipping starts instantly. */
+    private fun prefetchNextTracks() {
         val mediaController = connectedController ?: return
-        if (!mediaController.hasNextMediaItem()) return
-        val nextTrackId = mediaController.getMediaItemAt(mediaController.nextMediaItemIndex).mediaId
-        scope.launch(Dispatchers.IO) {
-            streamResolver.resolve(nextTrackId)
+        val timeline = mediaController.currentTimeline
+        if (timeline.isEmpty) return
+        generateSequence(mediaController.currentMediaItemIndex) { index ->
+            timeline.getNextWindowIndex(index, Player.REPEAT_MODE_OFF, mediaController.shuffleModeEnabled)
+                .takeIf { nextIndex -> nextIndex != C.INDEX_UNSET }
         }
+            .drop(1)
+            .take(PREFETCH_COUNT)
+            .forEach { index -> resolveAhead(mediaController.getMediaItemAt(index).mediaId) }
+    }
+
+    /** Starts resolving a song's audio in the background; the player then finds it ready. */
+    private fun resolveAhead(trackId: String) {
+        scope.launch(Dispatchers.IO) { streamResolver.resolve(trackId) }
     }
 
     private fun recordInHistoryOnFirstPlay() {
@@ -364,5 +375,6 @@ class MediaPlayerController @Inject constructor(
 
     private companion object {
         val POSITION_UPDATE_INTERVAL = 250.milliseconds
+        const val PREFETCH_COUNT = 2
     }
 }

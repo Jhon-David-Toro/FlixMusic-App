@@ -9,7 +9,9 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -42,6 +44,7 @@ class PlaybackService : MediaSessionService() {
         super.onCreate()
         val player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(directStreamDataSourceFactory()))
+            .setLoadControl(wholeSongLoadControl())
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)
@@ -77,6 +80,18 @@ class PlaybackService : MediaSessionService() {
         super.onDestroy()
     }
 
+    /**
+     * Buffers the whole song (up to [MAX_BUFFER_MS]), also while paused, instead of
+     * ExoPlayer's default 50 s, and starts playing after 1 s of audio instead of 2.5 s.
+     * A 15-minute song at 128 kbps is about 14 MB, inside [TARGET_BUFFER_BYTES].
+     */
+    private fun wholeSongLoadControl(): LoadControl =
+        DefaultLoadControl.Builder()
+            .setBufferDurationsMs(MAX_BUFFER_MS, MAX_BUFFER_MS, START_PLAYBACK_BUFFER_MS, RESUME_PLAYBACK_BUFFER_MS)
+            .setTargetBufferBytes(TARGET_BUFFER_BYTES)
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .build()
+
     private fun directStreamDataSourceFactory(): DataSource.Factory =
         ResolvingDataSource.Factory(OkHttpDataSource.Factory(okHttpClient)) { dataSpec -> dataSpec.toDirectStream() }
 
@@ -107,5 +122,9 @@ class PlaybackService : MediaSessionService() {
     private companion object {
         const val RANGE_HEADER = "Range"
         const val FULL_RANGE = "bytes=0-"
+        const val MAX_BUFFER_MS = 15 * 60_000
+        const val START_PLAYBACK_BUFFER_MS = 1_000
+        const val RESUME_PLAYBACK_BUFFER_MS = 2_000
+        const val TARGET_BUFFER_BYTES = 32 * 1024 * 1024
     }
 }

@@ -4,6 +4,7 @@ import android.util.Log
 import com.flix.music.core.data.youtube.NewPipeSetup
 import java.time.Clock
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.FutureTask
 import javax.inject.Inject
 import javax.inject.Singleton
 import org.schabi.newpipe.extractor.MediaFormat
@@ -16,7 +17,8 @@ import org.schabi.newpipe.extractor.stream.StreamInfo
  * [StreamResolver] backed by NewPipeExtractor, the same approach as NewPipe and
  * Muzika: YouTube's player page is read and its signatures solved on the phone.
  * Prefers m4a/AAC (what the queue items declare) and falls back to the best other
- * progressive audio.
+ * progressive audio. Concurrent resolves of the same song (the tap, the player and a
+ * prefetch) share one extraction.
  */
 @Singleton
 class NewPipeStreamResolver @Inject constructor(
@@ -28,14 +30,26 @@ class NewPipeStreamResolver @Inject constructor(
 
     private val cache = ConcurrentHashMap<String, CachedStream>()
 
+    private val inFlight = ConcurrentHashMap<String, FutureTask<String?>>()
+
     override fun resolve(trackId: String): String? {
         val now = clock.millis()
         cache[trackId]?.takeIf { cached -> cached.expiresAtMillis > now }?.let { cached -> return cached.url }
+        val task = inFlight.computeIfAbsent(trackId) { FutureTask { extractAndCache(trackId) } }
+        task.run()
+        return try {
+            task.get()
+        } finally {
+            inFlight.remove(trackId, task)
+        }
+    }
+
+    private fun extractAndCache(trackId: String): String? {
         val url = runCatching { extract(trackId) }
             .onFailure { failure -> Log.w(TAG, "Could not resolve $trackId on the phone: ${failure.message}") }
             .getOrNull()
             ?: return null
-        cache[trackId] = CachedStream(url, streamExpiresAtMillis(url, now))
+        cache[trackId] = CachedStream(url, streamExpiresAtMillis(url, clock.millis()))
         return url
     }
 

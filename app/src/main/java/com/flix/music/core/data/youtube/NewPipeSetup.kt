@@ -1,10 +1,11 @@
 package com.flix.music.core.data.youtube
 
+import javax.inject.Inject
+import javax.inject.Singleton
 import okhttp3.OkHttpClient
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.Localization
-import javax.inject.Inject
-import javax.inject.Singleton
+import org.schabi.newpipe.extractor.services.youtube.YoutubeJavaScriptPlayerManager
 
 /**
  * Configures NewPipeExtractor once for the whole app (song details and audio
@@ -21,8 +22,18 @@ class NewPipeSetup @Inject constructor(private val okHttpClient: OkHttpClient) {
         initialization.value
     }
 
+    /**
+     * Downloads and caches YouTube's player script ahead of time; measured to save about
+     * a second on the first song. Failures are ignored: the first resolve fetches it then.
+     */
+    fun warmUp() {
+        ensureInitialized()
+        runCatching { YoutubeJavaScriptPlayerManager.getSignatureTimestamp(WARM_UP_VIDEO_ID) }
+    }
+
     private companion object {
         const val LANGUAGE = "en"
         const val COUNTRY = "US"
+        const val WARM_UP_VIDEO_ID = "dQw4w9WgXcQ"
     }
 }
