@@ -9,8 +9,9 @@ import com.flix.music.core.model.ArtistRef
 import com.flix.music.core.model.Track
 
 /**
- * Builds the queue item for [this] track. Audio comes from the backend's `/audio`
- * proxy (m4a with Range support), the only URL that works from any network.
+ * Builds the queue item for [this] track. Its URI is the backend's `/audio` proxy;
+ * [PlaybackService] replaces it with a stream resolved on the phone and keeps the
+ * server as the fallback.
  */
 internal fun Track.toMediaItem(): MediaItem =
     MediaItem.Builder()

@@ -13,9 +13,16 @@ import com.flix.music.core.data.repository.MusicRepository
 import com.flix.music.core.data.repository.SettingsRepository
 import com.flix.music.core.model.PlaybackModes
 import com.flix.music.core.model.Track
+import com.flix.music.core.player.stream.StreamResolver
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -33,21 +40,17 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import javax.inject.Inject
-import javax.inject.Singleton
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * [PlayerController] backed by a Media3 [MediaController] connected to [PlaybackService].
  *
  * Error handling follows the design: a failed track is retried once silently; if it
  * fails again it is skipped with a [PlayerEvent.TrackSkipped] snackbar, and the last
- * track of the queue stays in [PlaybackStatus.Error] with a retry action.
- * The next track is prefetched through `/stream` so skips start instantly, and every
- * track is added to the history the first time it actually plays.
+ * track of the queue stays in [PlaybackStatus.Error] with a retry action; the retry
+ * drops the track's phone-resolved URL so a rejected one is resolved again.
+ * The next track is resolved ahead on the phone (or warmed through the server's
+ * `/stream` when that fails) so skips start instantly, and every track is added to
+ * the history the first time it actually plays.
  * Shuffle and repeat are saved when they change and restored on start when the user
  * turned on "Recordar aleatorio y repetir".
  */
@@ -57,6 +60,7 @@ class MediaPlayerController @Inject constructor(
     private val repository: MusicRepository,
     private val historyRepository: HistoryRepository,
     private val settingsRepository: SettingsRepository,
+    private val streamResolver: StreamResolver,
 ) : PlayerController {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -258,6 +262,7 @@ class MediaPlayerController @Inject constructor(
             !retriedCurrentTrack -> {
                 retriedCurrentTrack = true
                 recoveringFromError = true
+                mediaController.currentMediaItem?.mediaId?.let(streamResolver::forget)
                 mediaController.prepare()
                 mediaController.play()
             }
@@ -277,8 +282,8 @@ class MediaPlayerController @Inject constructor(
         val mediaController = connectedController ?: return
         if (!mediaController.hasNextMediaItem()) return
         val nextTrackId = mediaController.getMediaItemAt(mediaController.nextMediaItemIndex).mediaId
-        scope.launch {
-            runCatching { repository.prefetch(nextTrackId) }
+        scope.launch(Dispatchers.IO) {
+            if (streamResolver.resolve(nextTrackId) == null) runCatching { repository.prefetch(nextTrackId) }
         }
     }
 
