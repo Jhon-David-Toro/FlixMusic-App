@@ -6,9 +6,9 @@ import com.flix.music.core.data.repository.HistoryRepository
 import com.flix.music.core.model.ListeningSummary
 import com.flix.music.core.model.StatsPeriod
 import com.flix.music.core.model.summaryFor
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -34,13 +34,9 @@ class StatsViewModel @Inject constructor(
     val uiState: StateFlow<StatsUiState> = combine(historyRepository.history, period) { history, selectedPeriod ->
         val today = LocalDate.now(clock)
         StatsUiState(selectedPeriod, today, history.summaryFor(selectedPeriod, today, clock.zone))
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), StatsUiState())
+    }.stateIn(viewModelScope, WhileUiSubscribed, StatsUiState())
 
     fun onPeriodChange(newPeriod: StatsPeriod) {
         period.value = newPeriod
-    }
-
-    private companion object {
-        const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

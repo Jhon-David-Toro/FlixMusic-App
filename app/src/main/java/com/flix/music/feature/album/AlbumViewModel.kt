@@ -15,9 +15,9 @@ import com.flix.music.core.model.totalDuration
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerState
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -71,7 +71,7 @@ class AlbumViewModel @Inject constructor(
 
     val uiState: StateFlow<AlbumUiState> = combine(loaded, savedAlbumsRepository.albums) { state, savedAlbums ->
         if (state is AlbumUiState.Content) state.copy(isSaved = savedAlbums.any { it.id == albumId }) else state
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), loaded.value)
+    }.stateIn(viewModelScope, WhileUiSubscribed, loaded.value)
 
     init {
         load()
@@ -138,6 +138,5 @@ class AlbumViewModel @Inject constructor(
         const val ALBUM_NAME_ARGUMENT = "albumName"
         const val ARTIST_NAME_ARGUMENT = "artistName"
         const val ARTIST_ID_ARGUMENT = "artistId"
-        private const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

@@ -19,11 +19,11 @@ import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlaybackStatus
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerState
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -116,7 +116,7 @@ class HomeViewModel @Inject constructor(
 
     val uiState: StateFlow<HomeUiState> = combine(localSections, topArtist, moreFromArtist) { local, artist, more ->
         local.copy(topArtist = artist, moreFromArtist = more)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HomeUiState())
+    }.stateIn(viewModelScope, WhileUiSubscribed, HomeUiState())
 
     /** Resumes the player, or plays the last song again when the player is empty. */
     fun onResume() {
@@ -171,6 +171,5 @@ class HomeViewModel @Inject constructor(
 
     private companion object {
         const val MORE_FROM_COUNT = 3
-        const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

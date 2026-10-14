@@ -10,8 +10,8 @@ import com.flix.music.core.model.ListeningSummary
 import com.flix.music.core.model.StatsPeriod
 import com.flix.music.core.model.listenedInPreviousMonth
 import com.flix.music.core.model.summaryFor
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -59,9 +59,5 @@ class ProfileViewModel @Inject constructor(
             week = history.summaryFor(StatsPeriod.Week, today, clock.zone, rankingSize = 0),
             previousMonthListened = history.listenedInPreviousMonth(today, clock.zone),
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), ProfileUiState())
-
-    private companion object {
-        const val STOP_TIMEOUT_MILLIS = 5_000L
-    }
+    }.stateIn(viewModelScope, WhileUiSubscribed, ProfileUiState())
 }

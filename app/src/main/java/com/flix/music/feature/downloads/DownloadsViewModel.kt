@@ -9,8 +9,8 @@ import com.flix.music.core.model.SongDownload
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerState
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -32,7 +32,7 @@ class DownloadsViewModel @Inject constructor(
 
     val uiState: StateFlow<DownloadsUiState> = downloadsRepository.downloads
         .map { downloads -> DownloadsUiState.Content(downloads, downloadsRepository.storage()) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), DownloadsUiState.Loading)
+        .stateIn(viewModelScope, WhileUiSubscribed, DownloadsUiState.Loading)
 
     /** Plays the downloaded songs from [download] onwards; songs still downloading are left out. */
     fun onDownloadClick(download: SongDownload) {
@@ -47,8 +47,4 @@ class DownloadsViewModel @Inject constructor(
 
     /** Cancels a download in flight or deletes a finished one. */
     fun onRemove(download: SongDownload) = downloadsRepository.remove(download.track.id)
-
-    private companion object {
-        const val STOP_TIMEOUT_MILLIS = 5_000L
-    }
 }

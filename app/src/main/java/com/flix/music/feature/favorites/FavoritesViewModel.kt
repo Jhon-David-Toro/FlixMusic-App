@@ -15,9 +15,9 @@ import com.flix.music.core.model.totalDuration
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerState
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -64,7 +64,7 @@ class FavoritesViewModel @Inject constructor(
             visible = favorites.sortedFor(order).matching(text),
             totalDuration = favorites.map { it.track }.totalDuration(),
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), FavoritesUiState.Loading)
+    }.stateIn(viewModelScope, WhileUiSubscribed, FavoritesUiState.Loading)
 
     val currentSortOrder: StateFlow<SortOrder> = sortOrder
 
@@ -105,9 +105,5 @@ class FavoritesViewModel @Inject constructor(
         val tracks = visibleTracks()
         if (tracks.isEmpty()) return
         playerController.play(tracks, startIndex, PlaybackSource.Favorites, shuffle)
-    }
-
-    private companion object {
-        const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

@@ -137,8 +137,8 @@ fun SearchContent(
     filter: SearchFilter,
     recentSearches: List<String>,
     actions: SearchActions,
-    nowPlaying: NowPlayingMarker = NowPlayingMarker(),
     modifier: Modifier = Modifier,
+    nowPlaying: NowPlayingMarker = NowPlayingMarker(),
 ) {
     Column(modifier.fillMaxSize()) {
         Text(

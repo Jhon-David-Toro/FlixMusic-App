@@ -1,11 +1,11 @@
 package com.flix.music.core.data.youtube
 
-import javax.inject.Inject
-import javax.inject.Singleton
 import okhttp3.OkHttpClient
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.Localization
 import org.schabi.newpipe.extractor.services.youtube.YoutubeJavaScriptPlayerManager
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Configures NewPipeExtractor once for the whole app (song details and audio

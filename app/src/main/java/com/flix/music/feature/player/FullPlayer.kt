@@ -372,7 +372,7 @@ private fun PlayerControls(state: PlayerState, actions: FullPlayerActions) {
         ModeToggle(
             icon = R.drawable.ic_shuffle,
             label = stringResource(R.string.player_shuffle),
-            stateLabel = stringResource(if (state.shuffleEnabled) R.string.state_on else R.string.state_off),
+            stateLabel = stringResource(if (state.shuffleEnabled) R.string.toggle_on else R.string.toggle_off),
             active = state.shuffleEnabled,
             onClick = actions.onToggleShuffle,
         )

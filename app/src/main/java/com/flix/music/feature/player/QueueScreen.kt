@@ -71,8 +71,8 @@ import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlaybackStatus
 import com.flix.music.core.player.PlayerState
 import com.flix.music.core.player.QueueItem
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 
 /** Every user action on the Cola layer. Defaults do nothing, which keeps previews short. */
 data class QueueActions(
@@ -312,11 +312,12 @@ private fun QueueRow(
     isDragged: Boolean,
     onClick: () -> Unit,
     accessibilityActions: List<CustomAccessibilityAction>,
-    dragHandle: Modifier?,
+    modifier: Modifier = Modifier,
+    dragHandle: Modifier? = null,
 ) {
     val subtitle = listOfNotNull(track.artistNames, track.duration?.toClock()).joinToString(" · ")
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(COMPACT_ROW_HEIGHT)
             .then(if (isDragged) Modifier.shadow(6.dp, FlixTheme.shapes.md) else Modifier)

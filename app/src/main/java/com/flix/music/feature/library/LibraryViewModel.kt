@@ -25,9 +25,9 @@ import com.flix.music.core.model.sortedPlaylistsFor
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerState
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -141,7 +141,7 @@ class LibraryViewModel @Inject constructor(
                 .filter { it.name.containsText(text) || it.artistName.containsText(text) },
             artists = stored.artists.sortedByName(current.sortOrder) { it.name }.filter { it.name.containsText(text) },
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), LibraryUiState())
+    }.stateIn(viewModelScope, WhileUiSubscribed, LibraryUiState())
 
     fun onFilterChange(newFilter: LibraryFilter) {
         filter.value = newFilter
@@ -171,10 +171,6 @@ class LibraryViewModel @Inject constructor(
 
     fun onCreatePlaylist(name: String, description: String) {
         viewModelScope.launch { playlistsRepository.create(name, description) }
-    }
-
-    private companion object {
-        const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }
 

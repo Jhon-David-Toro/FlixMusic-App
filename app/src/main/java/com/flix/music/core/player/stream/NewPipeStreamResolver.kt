@@ -2,16 +2,16 @@ package com.flix.music.core.player.stream
 
 import android.util.Log
 import com.flix.music.core.data.youtube.NewPipeSetup
-import java.time.Clock
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.FutureTask
-import javax.inject.Inject
-import javax.inject.Singleton
 import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.DeliveryMethod
 import org.schabi.newpipe.extractor.stream.StreamInfo
+import java.time.Clock
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.FutureTask
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * [StreamResolver] backed by NewPipeExtractor, the same approach as NewPipe and

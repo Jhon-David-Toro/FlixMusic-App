@@ -8,14 +8,14 @@ import com.flix.music.core.data.repository.HistoryRepository
 import com.flix.music.core.data.repository.SettingsRepository
 import com.flix.music.core.model.AppTheme
 import com.flix.music.core.model.UserSettings
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class SettingsUiState(
     val settings: UserSettings = UserSettings(),
@@ -39,7 +39,7 @@ class SettingsViewModel @Inject constructor(
 
     val uiState: StateFlow<SettingsUiState> =
         combine(settingsRepository.settings, cacheBytes, ::SettingsUiState)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), SettingsUiState())
+            .stateIn(viewModelScope, WhileUiSubscribed, SettingsUiState())
 
     init {
         measureCache()
@@ -66,9 +66,5 @@ class SettingsViewModel @Inject constructor(
 
     private fun measureCache() {
         viewModelScope.launch { cacheBytes.value = cacheRepository.sizeInBytes() }
-    }
-
-    private companion object {
-        const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

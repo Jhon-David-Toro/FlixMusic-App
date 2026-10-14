@@ -67,8 +67,8 @@
     <string name="player_track_skipped">“%1$s” no está disponible ahora. Pasamos a la siguiente.</string>
     <string name="now_playing">Reproduciendo</string>
     <string name="now_paused">En pausa</string>
-    <string name="state_on">Activado</string>
-    <string name="state_off">Desactivado</string>
+    <string name="toggle_on">Activado</string>
+    <string name="toggle_off">Desactivado</string>
 
     <string name="favorites_title">Favoritos</string>
     <string name="favorites_search">Buscar en favoritos</string>

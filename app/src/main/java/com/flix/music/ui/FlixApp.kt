@@ -28,13 +28,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -46,6 +48,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.flix.music.R
 import com.flix.music.core.designsystem.component.FlixSnackbar
@@ -113,11 +117,14 @@ fun FlixApp(
     }
     val isOnline by appViewModel.isOnline.collectAsStateWithLifecycle()
     val navController = rememberNavController()
-    val backStack by navController.currentBackStack.collectAsStateWithLifecycle()
+    val currentEntry by navController.currentBackStackEntryAsState()
+    var lastTab by rememberSaveable { mutableStateOf(TopLevelDestination.Home) }
+    val selectedTab = currentEntry?.let(::tabOf) ?: lastTab
+    SideEffect { lastTab = selectedTab }
     val playerState by playerViewModel.state.collectAsStateWithLifecycle()
     val isCurrentFavorite by playerViewModel.isCurrentFavorite.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val hasTrack = playerState.status != PlaybackStatus.Idle && playerState.current != null
     val isExpanded = playerViewModel.isExpanded && hasTrack
 
@@ -155,7 +162,7 @@ fun FlixApp(
         playerViewModel.events.collect { event ->
             when (event) {
                 is PlayerEvent.TrackSkipped ->
-                    snackbarHostState.showSnackbar(context.getString(R.string.player_track_skipped, event.title))
+                    snackbarHostState.showSnackbar(resources.getString(R.string.player_track_skipped, event.title))
             }
         }
     }
@@ -228,7 +235,7 @@ fun FlixApp(
                                 )
                             }
                             FlixBottomBar(
-                                selectedTab = selectedTab(backStack),
+                                selectedTab = selectedTab,
                                 onNavigate = { destination -> navController.navigateToTopLevel(destination) },
                             )
                         }
@@ -377,15 +384,12 @@ private fun FlixBottomBar(
 }
 
 /**
- * The tab that owns the top of the back stack. Song, artist and album screens are
- * shared by every tab, so the tab is the last graph on the stack, not the current
- * destination's parent.
+ * The tab whose graph holds [entry]. Song, artist and album screens are shared by every
+ * tab and belong to none, so the bar keeps the tab they were opened from.
  */
-private fun selectedTab(backStack: List<NavBackStackEntry>): TopLevelDestination? =
-    backStack.asReversed().firstNotNullOfOrNull { entry ->
-        TopLevelDestination.entries.firstOrNull { destination ->
-            entry.destination.hasRoute(destination.route::class)
-        }
+private fun tabOf(entry: NavBackStackEntry): TopLevelDestination? =
+    TopLevelDestination.entries.firstOrNull { destination ->
+        entry.destination.hierarchy.any { ancestor -> ancestor.hasRoute(destination.route::class) }
     }
 
 private const val RECONNECTED_BANNER_MILLIS = 3_000L

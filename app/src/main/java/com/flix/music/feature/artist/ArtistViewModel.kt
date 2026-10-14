@@ -15,9 +15,9 @@ import com.flix.music.core.model.distinctAlbums
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerState
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -68,7 +68,7 @@ class ArtistViewModel @Inject constructor(
 
     val uiState: StateFlow<ArtistUiState> = combine(loaded, followedArtistsRepository.artists) { state, followed ->
         if (state is ArtistUiState.Content) state.copy(isFollowing = followed.any { it.id == artistId }) else state
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), loaded.value)
+    }.stateIn(viewModelScope, WhileUiSubscribed, loaded.value)
 
     init {
         load()
@@ -130,6 +130,5 @@ class ArtistViewModel @Inject constructor(
     internal companion object {
         const val ARTIST_ID_ARGUMENT = "artistId"
         const val ARTIST_NAME_ARGUMENT = "artistName"
-        private const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

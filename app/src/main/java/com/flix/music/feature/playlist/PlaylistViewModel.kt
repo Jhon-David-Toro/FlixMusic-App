@@ -11,8 +11,8 @@ import com.flix.music.core.model.totalDuration
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerState
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -52,7 +52,7 @@ class PlaylistViewModel @Inject constructor(
                 PlaylistUiState.Content(playlist, playlist.tracks.totalDuration())
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), PlaylistUiState.Loading)
+        .stateIn(viewModelScope, WhileUiSubscribed, PlaylistUiState.Loading)
 
     fun onPlay() = playFrom(startIndex = 0, shuffle = false)
 
@@ -84,6 +84,5 @@ class PlaylistViewModel @Inject constructor(
 
     internal companion object {
         const val PLAYLIST_ID_ARGUMENT = "playlistId"
-        private const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

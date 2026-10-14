@@ -22,6 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -48,13 +49,13 @@ import com.flix.music.core.model.HistoryDayLabel
 import com.flix.music.core.model.HistoryEntry
 import com.flix.music.core.model.Track
 import com.flix.music.core.ui.LocalTrackMenu
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
-import kotlinx.coroutines.launch
 
 /** Every user action on the History screen. Defaults do nothing, which keeps previews short. */
 data class HistoryActions(
@@ -188,7 +189,7 @@ fun HistoryContent(
                                     },
                                 trailing = {
                                     Text(
-                                        text = entry.playedAt.formatTime(),
+                                        text = entry.playedAt.formatTime(LocalConfiguration.current.locales[0]),
                                         style = FlixTheme.typography.caption,
                                         color = FlixTheme.colors.textTertiary,
                                     )
@@ -223,7 +224,11 @@ private fun DayHeader(label: HistoryDayLabel) {
     val text = when (label) {
         HistoryDayLabel.Today -> stringResource(R.string.history_today)
         HistoryDayLabel.Yesterday -> stringResource(R.string.history_yesterday)
-        is HistoryDayLabel.Date -> label.date.format(DAY_FORMATTER)
+        is HistoryDayLabel.Date -> {
+            val locale = LocalConfiguration.current.locales[0]
+            val dayFormatter = remember(locale) { DateTimeFormatter.ofPattern(DAY_PATTERN, locale) }
+            label.date.format(dayFormatter)
+        }
     }
     Text(
         text = text.uppercase(),
@@ -238,16 +243,13 @@ private fun DayHeader(label: HistoryDayLabel) {
     )
 }
 
-/**
- * Swipe end-to-start to remove (design Gestures): red error background with a delete
- * icon. TalkBack users get the same action through the row's custom actions.
- */
-private fun Instant.formatTime(): String =
-    atZone(ZoneId.systemDefault()).toLocalTime().format(TIME_FORMATTER)
+/** Time of day of a play in the user's format, e.g. "9:40 p. m.". */
+private fun Instant.formatTime(locale: Locale): String =
+    atZone(ZoneId.systemDefault()).toLocalTime().format(TIME_FORMATTER.withLocale(locale))
 
 private val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
 
-private val DAY_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE, d MMM", Locale.getDefault())
+private const val DAY_PATTERN = "EEEE, d MMM"
 
 private fun previewEntry(id: Long, title: String, artist: String) =
     HistoryEntry(id, Track(id.toString(), title, listOf(ArtistRef(null, artist)), null, null, null), Instant.EPOCH)

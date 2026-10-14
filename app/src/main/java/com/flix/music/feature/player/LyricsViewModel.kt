@@ -8,11 +8,11 @@ import com.flix.music.core.model.FlixException
 import com.flix.music.core.model.Lyrics
 import com.flix.music.core.model.Track
 import com.flix.music.core.player.PlayerController
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -47,7 +47,7 @@ class LyricsViewModel @Inject constructor(
 
     val uiState: StateFlow<LyricsUiState> = combine(currentTrack, retryRequests) { track, _ -> track }
         .flatMapLatest { track -> if (track == null) flowOf(LyricsUiState.Unavailable) else load(track) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), LyricsUiState.Loading)
+        .stateIn(viewModelScope, WhileUiSubscribed, LyricsUiState.Loading)
 
     fun onRetry() {
         retryRequests.value++
@@ -64,9 +64,5 @@ class LyricsViewModel @Inject constructor(
             LyricsUiState.Failed(exception.error)
         }
         emit(state)
-    }
-
-    private companion object {
-        const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

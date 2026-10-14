@@ -14,9 +14,9 @@ import com.flix.music.core.model.byArtist
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerState
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -65,7 +65,7 @@ class SongViewModel @Inject constructor(
             isFavorite = trackId in favoriteIds,
             isFollowingArtist = followedArtists.any { artist -> artist.id == state.mainArtist?.id },
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), loaded.value)
+    }.stateIn(viewModelScope, WhileUiSubscribed, loaded.value)
 
     init {
         load()
@@ -134,6 +134,5 @@ class SongViewModel @Inject constructor(
     internal companion object {
         const val TRACK_ID_ARGUMENT = "trackId"
         private const val MORE_LIKE_THIS_COUNT = 3
-        private const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

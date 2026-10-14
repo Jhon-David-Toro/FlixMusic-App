@@ -74,8 +74,8 @@ import com.flix.music.core.model.SortOrder
 import com.flix.music.core.model.Track
 import com.flix.music.core.ui.LocalDetailNavigator
 import com.flix.music.core.ui.LocalTrackMenu
-import java.time.Instant
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 /** Every user action on the Library tab. Defaults do nothing, which keeps previews short. */
 data class LibraryActions(

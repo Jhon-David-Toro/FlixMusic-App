@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -74,15 +75,16 @@ fun TrackMenuHost(
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val snackbarHostState = LocalSnackbarHostState.current
     val context = LocalContext.current
+    val resources = LocalResources.current
     val coroutineScope = rememberCoroutineScope()
 
     fun confirmAdded(playlistName: String, playlistId: Long) {
         coroutineScope.launch {
             val result = snackbarHostState.showSnackbar(
                 FlixSnackbarVisuals(
-                    message = context.getString(R.string.add_to_playlist_done, playlistName),
+                    message = resources.getString(R.string.add_to_playlist_done, playlistName),
                     icon = R.drawable.ic_check_circle_filled,
-                    actionLabel = context.getString(R.string.action_view),
+                    actionLabel = resources.getString(R.string.action_view),
                 ),
             )
             if (result == SnackbarResult.ActionPerformed) onOpenPlaylist(playlistId)
@@ -125,7 +127,7 @@ fun TrackMenuHost(
                         onClick = {
                             closeThen {
                                 viewModel.onPlayNext(track)
-                                confirm(context.getString(R.string.track_play_next_done))
+                                confirm(resources.getString(R.string.track_play_next_done))
                             }
                         },
                     )
@@ -135,7 +137,7 @@ fun TrackMenuHost(
                         onClick = {
                             closeThen {
                                 viewModel.onAddToQueue(track)
-                                confirm(context.getString(R.string.track_add_to_queue_done))
+                                confirm(resources.getString(R.string.track_add_to_queue_done))
                             }
                         },
                     )
@@ -147,7 +149,7 @@ fun TrackMenuHost(
                             closeThen {
                                 viewModel.onToggleFavorite(track)
                                 confirm(
-                                    context.getString(
+                                    resources.getString(
                                         if (isFavorite) R.string.favorite_removed else R.string.favorite_added,
                                     ),
                                 )
@@ -167,7 +169,7 @@ fun TrackMenuHost(
                         onClick = {
                             closeThen {
                                 viewModel.onRemoveDownload(track)
-                                confirm(context.getString(R.string.download_removed))
+                                confirm(resources.getString(R.string.download_removed))
                             }
                         },
                     )
@@ -178,7 +180,7 @@ fun TrackMenuHost(
                         onClick = {
                             closeThen {
                                 viewModel.onDownload(track)
-                                confirm(context.getString(R.string.download_started))
+                                confirm(resources.getString(R.string.download_started))
                             }
                         },
                     )

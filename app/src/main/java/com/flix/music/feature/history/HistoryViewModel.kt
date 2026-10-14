@@ -9,8 +9,8 @@ import com.flix.music.core.model.groupedByDay
 import com.flix.music.core.player.PlaybackSource
 import com.flix.music.core.player.PlayerController
 import com.flix.music.core.player.PlayerState
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -36,7 +36,7 @@ class HistoryViewModel @Inject constructor(
 
     val uiState: StateFlow<HistoryUiState> = historyRepository.history
         .map { entries -> HistoryUiState.Content(entries.groupedByDay(LocalDate.now(clock), clock.zone)) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HistoryUiState.Loading)
+        .stateIn(viewModelScope, WhileUiSubscribed, HistoryUiState.Loading)
 
     /** Plays the history from [entry] onwards (design: "Volver a reproducir"). */
     fun onEntryClick(entry: HistoryEntry) {
@@ -60,9 +60,5 @@ class HistoryViewModel @Inject constructor(
 
     fun onClearHistory() {
         viewModelScope.launch { historyRepository.clear() }
-    }
-
-    private companion object {
-        const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

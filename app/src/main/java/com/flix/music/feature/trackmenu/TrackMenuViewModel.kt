@@ -10,8 +10,8 @@ import com.flix.music.core.model.SortOrder
 import com.flix.music.core.model.Track
 import com.flix.music.core.model.sortedPlaylistsFor
 import com.flix.music.core.player.PlayerController
+import com.flix.music.core.ui.WhileUiSubscribed
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -28,17 +28,17 @@ class TrackMenuViewModel @Inject constructor(
 ) : ViewModel() {
 
     val favoriteIds: StateFlow<Set<String>> = favoritesRepository.favoriteIds
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), emptySet())
+        .stateIn(viewModelScope, WhileUiSubscribed, emptySet())
 
     /** Songs downloaded or on their way, which the menu offers to remove instead. */
     val downloadIds: StateFlow<Set<String>> = downloadsRepository.downloads
         .map { downloads -> downloads.mapTo(HashSet()) { download -> download.track.id } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), emptySet())
+        .stateIn(viewModelScope, WhileUiSubscribed, emptySet())
 
     /** Most recently changed first, so the playlist you are building is on top. */
     val playlists: StateFlow<List<Playlist>> = playlistsRepository.playlists
         .map { playlists -> playlists.sortedPlaylistsFor(SortOrder.Recent) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), emptyList())
+        .stateIn(viewModelScope, WhileUiSubscribed, emptyList())
 
     fun onPlayNext(track: Track) = playerController.playNext(track)
 
@@ -59,8 +59,4 @@ class TrackMenuViewModel @Inject constructor(
     /** Creates the playlist with [track] as its first song and returns its id. */
     suspend fun createPlaylistWith(name: String, description: String, track: Track): Long =
         playlistsRepository.create(name, description, firstTrack = track)
-
-    private companion object {
-        const val STOP_TIMEOUT_MILLIS = 5_000L
-    }
 }
